@@ -6,7 +6,7 @@
 #error "MAP_T (Value type) parameter not defined!"
 #endif
 #ifndef MAP_K
-#error "MAM_K (Key type) parameter not defined!"
+#error "MAP_K (Key type) parameter not defined!"
 #endif
 #if defined(MAP_T) && defined(MAP_K)
 
@@ -37,25 +37,48 @@
 #define K_DTOR(x) 
 #endif
 
+#ifdef MAP_T_COPY
+#define T_COPY MAP_T_COPY
+#else
+#define T_COPY(x, y) *(x) = *(y)
+#endif
+
+#ifdef MAP_K_COPY
+#define K_COPY MAP_K_COPY
+#else
+#define K_COPY(x, y) *(x) = *(y)
+#endif
+
 #define CAT(a, b) a##b
 #define PASTE(a, b) CAT(a, b)
 #define JOIN(prefix, name) PASTE(prefix, PASTE(_, name))
 
+#ifdef MAP_NAME
+#define MAP(K, T) MAP_NAME
+#define MPAIR(K, T) JOIN(MAP_NAME, Pair)
+#define MBUCK(K, T) JOIN(MAP_NAME, Bucket)
+#define MITER(K, T) JOIN(MAP_NAME, Iterator)
+#else
+#define MAP_NAME MAP(MAP_K, MAP_T)
 #define MAP(K, T) JOIN(Map, JOIN(K, T))
-#define MPAIR(K, T) JOIN(MPair, JOIN(K, T))
-#define MBUCK(K, T) JOIN(MBucket, JOIN(K, T))
+#define MPAIR(K, T) JOIN(MAP_NAME, Pair)
+#define MBUCK(K, T) JOIN(MAP_NAME, Bucket)
+#define MITER(K, T) JOIN(MAP_NAME, Iterator)
+#endif
 
 typedef struct
 {
     K Key;
     T Val;
 } MPAIR(K, T);
+
 typedef struct
 {
     MPAIR(K, T) *Data;
     u32 Capacity;
     u32 Count;
 } MBUCK(K, T);
+
 static inline void JOIN(MBUCK(K, T), Create)(MBUCK(K, T) *bucket) 
 { 
     bucket->Data     = NULL;
@@ -96,7 +119,7 @@ static inline void JOIN(MAP(K, T), Destroy)(MAP(K, T) *map)
         MBUCK(K, T) *bucket = map->BucketBuffer + i;
         for (u32 j = 0; j < bucket->Count; j++)
         {
-            MPAIR(K, T) *pair = bucket->Data + i;
+            MPAIR(K, T) *pair = bucket->Data + j;
             K_DTOR(&pair->Key);
             T_DTOR(&pair->Val);
             (void)pair;
@@ -107,7 +130,18 @@ static inline void JOIN(MAP(K, T), Destroy)(MAP(K, T) *map)
     free(map->BucketBuffer);
 }
 
-static inline T *JOIN(MAP(K, T), At)(MAP(K, T) *map, K *key)
+static inline T *JOIN(MAP(K, T), AtRW)(MAP(K, T) *map, K *key)
+{
+    u32 bucketID = H(key) % map->BucketCapacity;
+    MBUCK(K, T) *bucket = map->BucketBuffer + bucketID;
+    for (u32 i = 0; i < bucket->Count; i++)
+    {
+        if(EQ(&bucket->Data[i].Key, key))
+            return &bucket->Data[i].Val;
+    }
+    return NULL;
+}
+static inline T const *JOIN(MAP(K, T), AtRO)(const MAP(K, T) *map, K const *key)
 {
     u32 bucketID = H(key) % map->BucketCapacity;
     MBUCK(K, T) *bucket = map->BucketBuffer + bucketID;
@@ -154,9 +188,61 @@ static inline void JOIN(MAP(K, T), Put)(MAP(K, T) *map, K *key, T *val)
     JOIN(MBUCK(K, T), Add)(map->BucketBuffer + bucketID, &pair);
     map->Count += 1;
 }
+static inline void JOIN(MAP(K, T), PutCopy)(MAP(K, T) *map, K const *key, T const *val)
+{
+    if(map->Count == map->BucketCapacity)
+        JOIN(MAP(K, T), Reserve)(map, map->BucketCapacity ? map->BucketCapacity * 2 : 1);
+    
+    u32 bucketID = H(key) % map->BucketCapacity;
+    MPAIR(K, T) pair;
+    K_COPY(&pair.Key, key);
+    T_COPY(&pair.Val, val);
+    JOIN(MBUCK(K, T), Add)(map->BucketBuffer + bucketID, &pair);
+    map->Count += 1;
+}
+
+typedef struct 
+{
+    MAP(K, T)   *Map;
+    MBUCK(K, T) *Bucket;
+    sz           PairIndex;
+} MITER(K, T);
+static inline MITER(K, T) JOIN(MITER(K, T), Begin)(MAP(K, T) *map) 
+{
+    MBUCK(K, T) *bucket = map->BucketBuffer;
+    while(bucket != map->BucketBuffer + map->BucketCapacity && !bucket->Data)
+        bucket++;
+    return (MITER(K, T)) { map, bucket, 0 }; 
+}
+static inline bool JOIN(MITER(K, T), End)(const MITER(K, T) *i, const MAP(K, T) *map) { return i->Bucket == map->BucketBuffer + map->BucketCapacity; }
+static inline void JOIN(MITER(K, T), Inc)(MITER(K, T) *i)
+{
+    i->PairIndex++;
+    if(i->PairIndex == i->Bucket->Count)
+    {
+        do i->Bucket++;
+        while(i->Bucket != i->Map->BucketBuffer + i->Map->BucketCapacity && !i->Bucket->Data);
+
+        i->PairIndex = 0;
+    }
+}
+static inline MPAIR(K, T) const *JOIN(MITER(K, T), AccessRO)(MITER(K, T) *i) { return i->Bucket->Data + i->PairIndex; }
+static inline MPAIR(K, T)       *JOIN(MITER(K, T), AccessRW)(MITER(K, T) *i) { return i->Bucket->Data + i->PairIndex; }
+
+#define foreach(MAP_TYPE, MAP) for(MAP_TYPE##_Iterator i = MAP_TYPE##_Iterator##_Begin(&(MAP)); !MAP_TYPE##_Iterator##_End(&i, &(MAP)); MAP_TYPE##_Iterator##_Inc(&i))
 
 #undef T
 #undef K
 #undef H
 #undef EQ
+
+#undef MAP_T
+#undef MAP_K
+#undef MAP_T_DTOR
+#undef MAP_K_DTOR
+#undef MAP_T_COPY
+#undef MAP_K_COPY
+#undef MAP_HASH
+#undef MAP_EQ
+#undef MAP_NAME
 #endif

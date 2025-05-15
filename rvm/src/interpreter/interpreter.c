@@ -9,13 +9,14 @@
 #include "raiu/types.h"
 #include "metadata.h"
 #include "raiu/opcodes.h"
-#include "vm.h"
+#include "rvm.h"
 
 
 #define PC_OFFSET 0
 #define FP_OFFSET 2
-#define AWC_AND_RWC_OFFSET 4
-#define LOCALS_OFFSET 5
+#define MT_OFFSET 4
+#define AWC_AND_RWC_OFFSET 6
+#define LOCALS_OFFSET 7
 
 static inline u8 iNextU8(Byte **pc)  
 { 
@@ -290,6 +291,7 @@ i32 Execute(ProgramContext *context)
     Byte            *pc;
     Word            *sp;
     Word            *fp;
+    ModuleTable     *mt;
     Word            *wordPool;
     DWord           *dwordPool;
     ch8            **stringPool;
@@ -299,6 +301,7 @@ i32 Execute(ProgramContext *context)
     pc = (Byte*)(context->EntryPoint + 1);
     sp = context->StackBottom + context->EntryPoint->LWC;
     fp = context->StackBottom;
+    mt = context->EntryPoint->MT;
     wordPool     = context->EntryPoint->MT->WordPool;
     dwordPool    = context->EntryPoint->MT->DWordPool;
     stringPool   = context->EntryPoint->MT->StringPool;
@@ -1416,7 +1419,7 @@ CALL:
     {
         u16 f = iNextU16(&pc);
         FunctionHeader *header = &functionPool[f]->Header;
-        ModuleTable *mt = header->MT;
+        ModuleTable *newMT = header->MT;
         u16 awc         = header->AWC;
         u16 lwc         = header->LWC;
         u16 swc         = header->SWC;
@@ -1429,16 +1432,18 @@ CALL:
         Word *newFP = sp;
         ((DWord*)(newFP + PC_OFFSET))->Ptr          = pc;
         ((DWord*)(newFP + FP_OFFSET))->Ptr          = fp;
+        ((DWord*)(newFP + MT_OFFSET))->Ptr          = mt;
         (newFP + AWC_AND_RWC_OFFSET)->HWord[0].UInt = awc;
         (newFP + AWC_AND_RWC_OFFSET)->HWord[1].UInt = rwc;
 
         fp = newFP;
         sp = newFP + LOCALS_OFFSET + lwc;
         pc = (Byte*)(header + 1);
-        wordPool     = mt->WordPool;
-        dwordPool    = mt->DWordPool;
-        functionPool = mt->FunctionPool;
-        stringPool   = mt->StringPool;
+        mt = newMT;
+        wordPool     = newMT->WordPool;
+        dwordPool    = newMT->DWordPool;
+        functionPool = newMT->FunctionPool;
+        stringPool   = newMT->StringPool;
 
         UNLIKELY(sp + swc >= context->StackTop, "Stack overflow!\n");
     }
@@ -1478,7 +1483,7 @@ SYSCALL:
         HANDLE_SYSCALL_PRINT:
         {
             DWord str = *(DWord*)(sp - 2);
-            puts(str.Ptr);
+            printf(str.Ptr);
             sp -= 2;
             CONTINUE;
         }
@@ -1596,8 +1601,9 @@ SYSCALL:
         }
     }
 RET:
-    Byte *prevPC = ((DWord*)(fp + PC_OFFSET))->BytePtr; 
-    Word *prevFP = ((DWord*)(fp + FP_OFFSET))->WordPtr;
+    Byte *prevPC =        ((DWord*)(fp + PC_OFFSET))->BytePtr; 
+    Word *prevFP =        ((DWord*)(fp + FP_OFFSET))->WordPtr;
+    ModuleTable *prevMT = ((DWord*)(fp + MT_OFFSET))->Ptr;
     u16   awc    = (fp + AWC_AND_RWC_OFFSET)->HWord[0].UInt;
     u16   rwc    = (fp + AWC_AND_RWC_OFFSET)->HWord[1].UInt;
 
@@ -1609,6 +1615,11 @@ RET:
     sp = prevSP + rwc;
     fp = prevFP;
     pc = prevPC;
+    mt = prevMT;
+    wordPool     = mt->WordPool;
+    dwordPool    = mt->DWordPool;
+    stringPool   = mt->StringPool;
+    functionPool = mt->FunctionPool;
 
     CONTINUE;
 #pragma endregion

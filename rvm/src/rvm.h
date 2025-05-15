@@ -6,6 +6,7 @@
 
 i32 Link(ProgramContext *context, const String *rootpath);
 i32 Execute(ProgramContext *context);
+
 void Unlink(ProgramContext *context);
 
-int Run(const String *rootpath);
+i32 Run(const String *rootpath);

@@ -5,6 +5,5 @@ project(Raiu)
 
 include_directories("include")
 
-set(RVM_DIR "rvm")
-add_subdirectory(${RVM_DIR})
+add_subdirectory("rvm")
 

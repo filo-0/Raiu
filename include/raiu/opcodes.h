@@ -236,6 +236,8 @@
 #define OP_SYSCALL (u8) 0xD2
 #define OP_RET     (u8) 0xD3
 
+#define OP_MAX_OPCODE (OP_RET)
+
 #define OP_SYS_EXIT   (u8) 0x00
 #define OP_SYS_PRINT  (u8) 0x01
 #define OP_SYS_PRINTI (u8) 0x02
@@ -253,6 +255,8 @@
 #define OP_SYS_EXP64  (u8) 0x0D
 #define OP_SYS_LOG32  (u8) 0x0E
 #define OP_SYS_LOG64  (u8) 0x0F
+
+#define OP_SYS_MAX_OPCODE (OP_SYS_LOG64)
 
 
 

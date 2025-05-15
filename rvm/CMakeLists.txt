@@ -19,3 +19,6 @@ target_include_directories(${RVM} PRIVATE "src/")
 
 target_link_libraries(${RVM} PRIVATE m) # MATHLIB
 target_compile_definitions(${RVM} PRIVATE _DEFAULT_SOURCE) # used by dirent.h
+
+add_executable(CreateDummyProject "dummy_proj.c")
+target_compile_definitions(CreateDummyProject PRIVATE _DEFAULT_SOURCE) # used by dirent.h

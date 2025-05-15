@@ -11,7 +11,7 @@
 #if defined(LIST_T_DTOR)
 #define T_DTOR LIST_T_DTOR
 #else
-#define T_DTOR(x) ;
+#define T_DTOR(x) 
 #endif 
 
 #if defined(LIST_T_CPY)
@@ -20,10 +20,13 @@
 #define T_CPY(x, y) *(x) = *(y)
 #endif
 
+#ifdef LIST_NAME
+#define LIST(t) LIST_NAME
+#else
+#define LIST(t) JOIN(List, t)
+#endif
 
-#define LIST(type) JOIN(List, type)
-
-typedef struct
+typedef struct PASTE(_, LIST(T))
 {
     T   *Data;
     u32  Capacity;
@@ -43,7 +46,9 @@ static inline void JOIN(LIST(T), Destroy)(LIST(T) *list)
     free(list->Data); 
 }
 
-static inline T *JOIN(LIST(T), At)(LIST(T) *list, u32 i) { return list->Data + i; }
+static inline T *JOIN(LIST(T), AtRW)(LIST(T) *list, u32 i) { return list->Data + i; }
+static inline const T *JOIN(LIST(T), AtRO)(const LIST(T) *list, u32 i) { return list->Data + i; }
+
 static inline T *JOIN(LIST(T), Back)(LIST(T) *list) { return list->Data + list->Count - 1; }
 static inline T *JOIN(LIST(T), Front)(LIST(T) *list) { return list->Data; }
 
@@ -75,4 +80,11 @@ static inline void JOIN(LIST(T), PushBack)(LIST(T) *list, T *ref)
 #undef T
 #undef T_DTOR
 #undef T_CPY
+
+#undef LIST_T
+#undef LIST_T_DTOR
+#undef LIST_T_COPY
+#undef LIST
+#undef LIST_NAME
+
 #endif // LIST_T

@@ -22,6 +22,12 @@ typedef struct
     sz         Length;
 } String;
 
+static inline void String_Init(String *s)
+{
+    s->Data.Heap.Data     = NULL;
+    s->Data.Heap.Capacity = 0;
+    s->Length             = 0;
+}
 static inline void String_Create(String *this, const char *s)
 {
     if(s == NULL)
@@ -64,15 +70,25 @@ static inline void String_Destroy(String *this)
         return;
     free(this->Data.Heap.Data);
 }
-static inline char String_At(const String *this, sz i) 
+static inline void String_Clear(String *this)
+{
+    if(this->Length > SMALL_STRING_LEN)
+    {
+        free(this->Data.Heap.Data);
+        this->Data.Heap.Data     = NULL;
+        this->Data.Heap.Capacity = 0;
+    }
+    this->Length = 0;
+}
+static inline char *String_At(String *this, sz i) 
 {
     if(this->Length <= SMALL_STRING_LEN)
     {
-        return this->Data.Stack[i];
+        return this->Data.Stack + i;
     }
     else
     {
-        return this->Data.Heap.Data[i];
+        return this->Data.Heap.Data + i;
     }
 }
 static inline sz String_Capacity(const String *this)
@@ -113,7 +129,7 @@ static inline void String_Reserve(String *this, sz characters)
 
 static inline void String_PushBack(String *this, char c)
 {
-    if(this->Length == String_Capacity(this))
+    if(this->Length + 1 == String_Capacity(this))
         String_Reserve(this, this->Length ? this->Length * 2 : 1);
     sz newLength = this->Length + 1;
     char *thisBuffer = newLength <= SMALL_STRING_LEN ? this->Data.Stack : this->Data.Heap.Data;

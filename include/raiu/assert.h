@@ -5,7 +5,8 @@
 #define DEVEL_ASSERT(cond, ...) do {\
     if(!(cond)) \
     { \
-        printf(__VA_ARGS__); \
+        printf("[ERROR] "__VA_ARGS__); \
+        fflush(stdin); \
         __builtin_trap(); \
     } \
 } while(0)
@@ -15,7 +16,7 @@
 #define UNLIKELY(cond, ...) do {\
     if(cond) \
     { \
-        printf(__VA_ARGS__); \
+        printf("[ERROR] "__VA_ARGS__); \
         exit(1); \
     } \
 } while(0)

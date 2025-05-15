@@ -18,6 +18,7 @@ typedef struct _ModuleTable
     u16 FunctionPoolSize;
     u16 StringPoolSize;
 } ModuleTable;
+
 typedef struct _FunctionHeader
 {
     ModuleTable *MT;
@@ -52,3 +53,19 @@ typedef struct _ProgramContext
     sz ModuleTablesBufferSize;
 
 } ProgramContext;
+static inline void ProgramContext_Init(ProgramContext *context)
+{
+    context->StackBottom = NULL;
+    context->StackTop    = NULL;
+    context->EntryPoint  = NULL;
+    context->WordsBuffer        = NULL;
+    context->DWordsBuffer       = NULL;
+    context->StringsBuffer      = NULL;
+    context->FunctionsBuffer    = NULL;
+    context->ModuleTablesBuffer = NULL;
+    context->WordsBufferSize        = 0;
+    context->DWordsBufferSize       = 0;
+    context->StringsBufferSize      = 0;
+    context->FunctionsBufferSize    = 0;
+    context->ModuleTablesBufferSize = 0;
+}
