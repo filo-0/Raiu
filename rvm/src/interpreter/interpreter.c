@@ -330,6 +330,7 @@ i32 Execute(ProgramContext *context)
         &&PUSH_DWORD_L,
         &&PUSH_DWORD_L,
         &&PUSH_WORDS,
+        &&PUSH_REF,
         
         &&PUSH_I32_V,
         &&PUSH_I32_V,
@@ -589,7 +590,6 @@ i32 Execute(ProgramContext *context)
         &&NOT_IMPLEMENTED,
         &&NOT_IMPLEMENTED,
         &&NOT_IMPLEMENTED,
-        &&NOT_IMPLEMENTED,
 };
 #pragma endregion
     const void * const *instructionTable = InstructionPointers;
@@ -646,6 +646,13 @@ PUSH_WORDS:
         sz l = iNextU8(&pc);
         sz n = iNextU8(&pc) + 1;
         LOCAL_PUSH_WORDS(sp, fp, l, n);
+    }
+    CONTINUE;
+PUSH_REF:
+    {
+        sz l      = iNextU8(&pc);
+        DWord ref = RefToDWord(fp + LOCALS_OFFSET + l); 
+        VAL_PUSH_DWORD(sp, ref);
     }
     CONTINUE;
 #pragma endregion

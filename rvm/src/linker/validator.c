@@ -3,7 +3,6 @@
 #include "raiu/log.h"
 
 
-
 i32 Validate(const String *functionSignature, const FunctionHeader *header, const u8 *instruction, i32 sp)
 {
     static const i32 sInstructionsStackOffsets[] = 
@@ -15,6 +14,7 @@ i32 Validate(const String *functionSignature, const FunctionHeader *header, cons
         1, 1, 1, 1, 1, // push word
         2, 2, 2, 2, 2, // push dword
         INT32_MIN, // push words
+        2, // push ref
         // push imm
         1, 1, 1, // push i32
         2, 2, 2, // push i64
@@ -104,6 +104,7 @@ i32 Validate(const String *functionSignature, const FunctionHeader *header, cons
         1, 0, 0, 0, 0, // push word
         1, 0, 0, 0, 0, // push dword
         2, // push words
+        1, // push ref
         // push imm
         0, 0, 0, // push i32
         0, 0, 0, // pusg i64
@@ -247,6 +248,7 @@ i32 Validate(const String *functionSignature, const FunctionHeader *header, cons
         case OP_PUSH_HWORD_1:
         case OP_PUSH_WORD:
         case OP_PUSH_DWORD:
+        case OP_PUSH_REF:
         case OP_INC_I32:
         case OP_INC_I64:
         case OP_INC_F32:
