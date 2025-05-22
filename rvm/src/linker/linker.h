@@ -27,6 +27,9 @@ static inline void FunctionData_Destroy(FunctionData *data) { free(data->Func); 
 #define LIST_NAME FunctionList
 #include "raiu/list.h"
 
+#define LIST_T sz
+#include "raiu/list.h"
+
 typedef struct _ModuleData
 {
     // all buffers must be freed
@@ -36,6 +39,9 @@ typedef struct _ModuleData
     List_String InternalFunctions;
     List_String ExternalFunctions;
     FunctionList FunctionDefinitions;
+    List_String InternalGlobals;
+    List_String ExternalGlobals;
+    List_sz     GlobalSizes;
 } ModuleData;
 static inline void ModuleData_Create(ModuleData *data)
 { 
@@ -45,6 +51,9 @@ static inline void ModuleData_Create(ModuleData *data)
     List_String_Create(&data->InternalFunctions);
     List_String_Create(&data->ExternalFunctions);
     FunctionList_Create(&data->FunctionDefinitions); 
+    List_String_Create(&data->InternalGlobals);
+    List_String_Create(&data->ExternalGlobals);   
+    List_sz_Create(&data->GlobalSizes);
 }
 static inline void ModuleData_Destroy(ModuleData *data)
 {
@@ -54,6 +63,9 @@ static inline void ModuleData_Destroy(ModuleData *data)
     List_String_Destroy(&data->InternalFunctions);
     List_String_Destroy(&data->ExternalFunctions);
     FunctionList_Destroy(&data->FunctionDefinitions);
+    List_String_Destroy(&data->InternalGlobals);
+    List_String_Destroy(&data->ExternalGlobals);  
+    List_sz_Destroy(&data->GlobalSizes);
 }
 
 #define LIST_T ModuleData

@@ -12,11 +12,13 @@ typedef struct _ModuleTable
     // indirect buffers (Need to be freed)
     struct _Function **FunctionPool;
     ch8              **StringPool;
+    void             **GlobalPool;
     
     u16 WordPoolSize;
     u16 DWordPoolSize;
     u16 FunctionPoolSize;
     u16 StringPoolSize;
+    u16 GlobalPoolSize;
 } ModuleTable;
 
 typedef struct _FunctionHeader
@@ -44,15 +46,17 @@ typedef struct _ProgramContext
     DWord *DWordsBuffer;
     Byte  *FunctionsBuffer;
     Byte  *StringsBuffer;
+    Byte  *GlobalsBuffer;
     ModuleTable *ModuleTablesBuffer;
 
     sz WordsBufferSize;
     sz DWordsBufferSize;
     sz StringsBufferSize;
     sz FunctionsBufferSize;
+    sz GlobalsBufferSize;
     sz ModuleTablesBufferSize;
-
 } ProgramContext;
+
 static inline void ProgramContext_Init(ProgramContext *context)
 {
     context->StackBottom = NULL;
@@ -62,10 +66,12 @@ static inline void ProgramContext_Init(ProgramContext *context)
     context->DWordsBuffer       = NULL;
     context->StringsBuffer      = NULL;
     context->FunctionsBuffer    = NULL;
+    context->GlobalsBuffer      = NULL;
     context->ModuleTablesBuffer = NULL;
     context->WordsBufferSize        = 0;
     context->DWordsBufferSize       = 0;
     context->StringsBufferSize      = 0;
     context->FunctionsBufferSize    = 0;
+    context->GlobalsBufferSize      = 0;
     context->ModuleTablesBufferSize = 0;
 }

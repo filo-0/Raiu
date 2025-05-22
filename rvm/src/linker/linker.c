@@ -8,11 +8,11 @@
 #include "raiu/raiu.h"
 #include "metadata.h"
 
-#define MAP_T char*
+#define MAP_T sz
 #define MAP_K String
 #define MAP_K_DTOR String_Destroy
 #define MAP_K_COPY String_Copy
-#define MAP_NAME StringMap
+#define MAP_NAME GlobalsMap
 #define MAP_HASH String_Hash
 #define MAP_EQ String_Equal
 #include "raiu/map.h"
@@ -216,7 +216,6 @@ static i32 iUpdateLinkData(LinkData *linkData, const String *filepath)
         goto RET;
     }
 
-
     ptr = iGetFunctionSignatures(ptr, bufferLimit, filepath, &moduleData.InternalFunctions, &moduleData.ExternalFunctions);
     if(!ptr)
     {
@@ -290,6 +289,7 @@ static i32  iAllocateContextBuffers(ProgramContext *context, const LinkData *lin
     sz dwordBufferSize    = 0;
     sz stringBufferSize   = 0;
     sz functionBufferSize = 0;
+    sz globalsBufferSize  = 0;
     for (u32 i = 0; i < linkData->Count; i++)
     {
         const ModuleData *moduleData = LinkData_AtRO(linkData, i);
@@ -303,8 +303,18 @@ static i32  iAllocateContextBuffers(ProgramContext *context, const LinkData *lin
             functionBufferSize += functionBufferSize % 8 ? 8 - (context->FunctionsBufferSize % 8) : 0; // allign to 8 bytes
             functionBufferSize += FunctionList_AtRO(&moduleData->FunctionDefinitions, j)->Size + 8; // 8 bytes for module table pointer
         }
+        for (u32 j = 0; j < moduleData->GlobalSizes.Count; j++)
+        {
+            sz globalSize = *List_sz_AtRO(&moduleData->GlobalSizes, j);
+            sz alignement;
+            if     (globalSize > 4) alignement = 8;
+            else if(globalSize > 2) alignement = 4;
+            else if(globalSize > 1) alignement = 2;
+            else                    alignement = 1;
+            globalsBufferSize += globalsBufferSize % alignement ? alignement - (globalsBufferSize % alignement): 0; // align to alignement
+            globalsBufferSize += globalSize;
+        }   
     }
-    
     
     context->StackBottom = calloc(DEFAULT_STACK_SIZE, sizeof(Word));
     context->StackTop    = context->StackBottom + DEFAULT_STACK_SIZE / sizeof(Word);
@@ -312,6 +322,7 @@ static i32  iAllocateContextBuffers(ProgramContext *context, const LinkData *lin
     context->WordsBuffer        = wordBufferSize     ? (Word*)  calloc(wordBufferSize  , sizeof(Word))   : NULL;
     context->DWordsBuffer       = dwordBufferSize    ? (DWord*) calloc(dwordBufferSize , sizeof(DWord))  : NULL;
     context->StringsBuffer      = stringBufferSize   ? (Byte*)  calloc(stringBufferSize, sizeof(Byte))   : NULL;
+    context->GlobalsBuffer      = globalsBufferSize  ? (Byte*)  calloc(globalsBufferSize, sizeof(Byte))  : NULL;
     context->FunctionsBuffer    = (Byte*)        calloc(functionBufferSize, sizeof(Byte));
     context->ModuleTablesBuffer = (ModuleTable*) calloc(linkData->Count   , sizeof(ModuleTable));
 
@@ -320,6 +331,7 @@ static i32  iAllocateContextBuffers(ProgramContext *context, const LinkData *lin
     context->DWordsBufferSize       = dwordBufferSize;
     context->StringsBufferSize      = stringBufferSize;
     context->FunctionsBufferSize    = functionBufferSize;
+    context->GlobalsBufferSize      = globalsBufferSize;
     context->ModuleTablesBufferSize = linkData->Count; 
 
     if(
@@ -328,7 +340,8 @@ static i32  iAllocateContextBuffers(ProgramContext *context, const LinkData *lin
         (                                     context->FunctionsBuffer    == NULL) ||
         (context->WordsBufferSize     != 0 && context->WordsBuffer        == NULL) ||
         (context->DWordsBufferSize    != 0 && context->DWordsBuffer       == NULL) ||
-        (context->StringsBufferSize   != 0 && context->StringsBuffer      == NULL)
+        (context->StringsBufferSize   != 0 && context->StringsBuffer      == NULL) ||
+        (context->GlobalsBufferSize   != 0 && context->GlobalsBuffer      == NULL)
     )
     {
         LOG_ERROR("Linked : Failed to allocate application data!");
@@ -532,6 +545,7 @@ void Unlink(ProgramContext *context)
     {
         free(context->ModuleTablesBuffer[i].StringPool);
         free(context->ModuleTablesBuffer[i].FunctionPool);
+        free(context->ModuleTablesBuffer[i].GlobalPool);
     }
 
     free(context->ModuleTablesBuffer);
@@ -539,5 +553,6 @@ void Unlink(ProgramContext *context)
     free(context->DWordsBuffer);
     free(context->StringsBuffer);
     free(context->FunctionsBuffer);
+    free(context->GlobalsBuffer);
     free(context->StackBottom);
 }

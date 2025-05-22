@@ -312,343 +312,343 @@ i32 Execute(ProgramContext *context)
     __attribute__((aligned(128)))
     static const void* const InstructionPointers[256] = 
     {
-        &&BREAKPOINT,
-        &&PUSH_BYTE,
-        &&PUSH_BYTE,
-        &&PUSH_BYTE,
-        &&PUSH_BYTE,
-        &&PUSH_HWORD,
-        &&PUSH_HWORD,
-        &&PUSH_WORD,
-        &&PUSH_WORD_L,
-        &&PUSH_WORD_L,
-        &&PUSH_WORD_L,
-        &&PUSH_WORD_L,
-        &&PUSH_DWORD,
-        &&PUSH_DWORD_L,
-        &&PUSH_DWORD_L,
-        &&PUSH_DWORD_L,
-        &&PUSH_DWORD_L,
-        &&PUSH_WORDS,
-        &&PUSH_REF,
+        &&HANDLE_BREAKPOINT,
+        &&HANDLE_PUSH_BYTE,
+        &&HANDLE_PUSH_BYTE,
+        &&HANDLE_PUSH_BYTE,
+        &&HANDLE_PUSH_BYTE,
+        &&HANDLE_PUSH_HWORD,
+        &&HANDLE_PUSH_HWORD,
+        &&HANDLE_PUSH_WORD,
+        &&HANDLE_PUSH_WORD_L,
+        &&HANDLE_PUSH_WORD_L,
+        &&HANDLE_PUSH_WORD_L,
+        &&HANDLE_PUSH_WORD_L,
+        &&HANDLE_PUSH_DWORD,
+        &&HANDLE_PUSH_DWORD_L,
+        &&HANDLE_PUSH_DWORD_L,
+        &&HANDLE_PUSH_DWORD_L,
+        &&HANDLE_PUSH_DWORD_L,
+        &&HANDLE_PUSH_WORDS,
+        &&HANDLE_PUSH_REF,
         
-        &&PUSH_I32_V,
-        &&PUSH_I32_V,
-        &&PUSH_I32_V,
-        &&PUSH_I64_V,
-        &&PUSH_I64_V,
-        &&PUSH_I64_V,
-        &&PUSH_F32_1,
-        &&PUSH_F32_2,
-        &&PUSH_F64_1,
-        &&PUSH_F64_2,
-        &&PUSH_I32,
-        &&PUSH_I64,
-    
-        &&PUSH_CONST_WORD,
-        &&PUSH_CONST_WORD_W,
-        &&PUSH_CONST_DWORD,
-        &&PUSH_CONST_DWORD_W,
-        &&PUSH_CONST_STR,
-        &&PUSH_CONST_STR_W,
+        &&HANDLE_PUSH_I32_V,
+        &&HANDLE_PUSH_I32_V,
+        &&HANDLE_PUSH_I32_V,
+        &&HANDLE_PUSH_I64_V,
+        &&HANDLE_PUSH_I64_V,
+        &&HANDLE_PUSH_I64_V,
+        &&HANDLE_PUSH_F32_1,
+        &&HANDLE_PUSH_F32_2,
+        &&HANDLE_PUSH_F64_1,
+        &&HANDLE_PUSH_F64_2,
+        &&HANDLE_PUSH_I32,
+        &&HANDLE_PUSH_I64,
+        
+        &&HANDLE_PUSH_CONST_WORD,
+        &&HANDLE_PUSH_CONST_WORD_W,
+        &&HANDLE_PUSH_CONST_DWORD,
+        &&HANDLE_PUSH_CONST_DWORD_W,
+        &&HANDLE_PUSH_CONST_STR,
+        &&HANDLE_PUSH_CONST_STR_W,
+        &&HANDLE_PUSH_GLOB_REF,
+        &&HANDLE_PUSH_GLOB_REF_W,
+        &&HANDLE_PUSH_FUNC,
 
-        &&POP_BYTE,
-        &&POP_BYTE,
-        &&POP_BYTE,
-        &&POP_BYTE,
-        &&POP_HWORD,
-        &&POP_HWORD,
-        &&POP_WORD,
-        &&POP_WORD_L,
-        &&POP_WORD_L,
-        &&POP_WORD_L,
-        &&POP_WORD_L,
-        &&POP_DWORD,
-        &&POP_DWORD_L,
-        &&POP_DWORD_L,
-        &&POP_DWORD_L,
-        &&POP_DWORD_L,
-        &&POP_WORDS,
+        &&HANDLE_POP_BYTE,
+        &&HANDLE_POP_BYTE,
+        &&HANDLE_POP_BYTE,
+        &&HANDLE_POP_BYTE,
+        &&HANDLE_POP_HWORD,
+        &&HANDLE_POP_HWORD,
+        &&HANDLE_POP_WORD,
+        &&HANDLE_POP_WORD_L,
+        &&HANDLE_POP_WORD_L,
+        &&HANDLE_POP_WORD_L,
+        &&HANDLE_POP_WORD_L,
+        &&HANDLE_POP_DWORD,
+        &&HANDLE_POP_DWORD_L,
+        &&HANDLE_POP_DWORD_L,
+        &&HANDLE_POP_DWORD_L,
+        &&HANDLE_POP_DWORD_L,
+        &&HANDLE_POP_WORDS,
 
-        &&ADD_I32,
-        &&ADD_I64,
-        &&ADD_F32,
-        &&ADD_F64,
-        &&INC_I32,
-        &&INC_I64,
-        &&INC_F32,
-        &&INC_F64,
+        &&HANDLE_ADD_I32,
+        &&HANDLE_ADD_I64,
+        &&HANDLE_ADD_F32,
+        &&HANDLE_ADD_F64,
+        &&HANDLE_INC_I32,
+        &&HANDLE_INC_I64,
+        &&HANDLE_INC_F32,
+        &&HANDLE_INC_F64,
 
-        &&SUB_I32,
-        &&SUB_I64,
-        &&SUB_F32,
-        &&SUB_F64,
-        &&DEC_I32,
-        &&DEC_I64,
-        &&DEC_F32,
-        &&DEC_F64,
+        &&HANDLE_SUB_I32,
+        &&HANDLE_SUB_I64,
+        &&HANDLE_SUB_F32,
+        &&HANDLE_SUB_F64,
+        &&HANDLE_DEC_I32,
+        &&HANDLE_DEC_I64,
+        &&HANDLE_DEC_F32,
+        &&HANDLE_DEC_F64,
 
-        &&MUL_I32,
-        &&MUL_I64,
-        &&MUL_U32,
-        &&MUL_U64,
-        &&MUL_F32,
-        &&MUL_F64,
+        &&HANDLE_MUL_I32,
+        &&HANDLE_MUL_I64,
+        &&HANDLE_MUL_U32,
+        &&HANDLE_MUL_U64,
+        &&HANDLE_MUL_F32,
+        &&HANDLE_MUL_F64,
 
-        &&DIV_I32,
-        &&DIV_I64,
-        &&DIV_U32,
-        &&DIV_U64,
-        &&DIV_F32,
-        &&DIV_F64,
+        &&HANDLE_DIV_I32,
+        &&HANDLE_DIV_I64,
+        &&HANDLE_DIV_U32,
+        &&HANDLE_DIV_U64,
+        &&HANDLE_DIV_F32,
+        &&HANDLE_DIV_F64,
 
-        &&REM_I32,
-        &&REM_I64,
-        &&REM_U32,
-        &&REM_U64,
+        &&HANDLE_REM_I32,
+        &&HANDLE_REM_I64,
+        &&HANDLE_REM_U32,
+        &&HANDLE_REM_U64,
 
-        &&NEG_I32,
-        &&NEG_I64,
-        &&NEG_F32,
-        &&NEG_F64,
+        &&HANDLE_NEG_I32,
+        &&HANDLE_NEG_I64,
+        &&HANDLE_NEG_F32,
+        &&HANDLE_NEG_F64,
 
-        &&NOT_WORD,
-        &&NOT_DWORD,
-        &&AND_WORD,
-        &&AND_DWORD,
-        &&OR_WORD,
-        &&OR_DWORD,
-        &&XOR_WORD,
-        &&XOR_DWORD,
-        &&SHL_WORD,
-        &&SHL_DWORD,
-        &&SHR_I32,
-        &&SHR_I64,
-        &&SHR_U32,
-        &&SHR_U64,
+        &&HANDLE_NOT_WORD,
+        &&HANDLE_NOT_DWORD,
+        &&HANDLE_AND_WORD,
+        &&HANDLE_AND_DWORD,
+        &&HANDLE_OR_WORD,
+        &&HANDLE_OR_DWORD,
+        &&HANDLE_XOR_WORD,
+        &&HANDLE_XOR_DWORD,
+        &&HANDLE_SHL_WORD,
+        &&HANDLE_SHL_DWORD,
+        &&HANDLE_SHR_I32,
+        &&HANDLE_SHR_I64,
+        &&HANDLE_SHR_U32,
+        &&HANDLE_SHR_U64,
 
-        &&I32_TO_I8,
-        &&I32_TO_I16,
-        &&I32_TO_I64,
-        &&I32_TO_F32,
-        &&I32_TO_F64,
-        &&I64_TO_I32,
-        &&I64_TO_F32,
-        &&I64_TO_F64,
-        &&F32_TO_I32,
-        &&F32_TO_I64,
-        &&F32_TO_F64,
-        &&F64_TO_I32,
-        &&F64_TO_I64,
-        &&F64_TO_F32,
+        &&HANDLE_I32_TO_I8,
+        &&HANDLE_I32_TO_I16,
+        &&HANDLE_I32_TO_I64,
+        &&HANDLE_I32_TO_F32,
+        &&HANDLE_I32_TO_F64,
+        &&HANDLE_I64_TO_I32,
+        &&HANDLE_I64_TO_F32,
+        &&HANDLE_I64_TO_F64,
+        &&HANDLE_F32_TO_I32,
+        &&HANDLE_F32_TO_I64,
+        &&HANDLE_F32_TO_F64,
+        &&HANDLE_F64_TO_I32,
+        &&HANDLE_F64_TO_I64,
+        &&HANDLE_F64_TO_F32,
 
-        &&CMP_WORD_EQ,
-        &&CMP_DWORD_EQ,
-        &&CMP_WORD_NE,
-        &&CMP_DWORD_NE,
-        &&CMP_I32_GT,
-        &&CMP_I64_GT,
-        &&CMP_U32_GT,
-        &&CMP_U64_GT,
-        &&CMP_F32_GT,
-        &&CMP_F64_GT,
-        &&CMP_I32_LT,
-        &&CMP_I64_LT,
-        &&CMP_U32_LT,
-        &&CMP_U64_LT,
-        &&CMP_F32_LT,
-        &&CMP_F64_LT,
-        &&CMP_I32_GE,
-        &&CMP_I64_GE,
-        &&CMP_U32_GE,
-        &&CMP_U64_GE,
-        &&CMP_F32_GE,
-        &&CMP_F64_GE,
-        &&CMP_I32_LE,
-        &&CMP_I64_LE,
-        &&CMP_U32_LE,
-        &&CMP_U64_LE,
-        &&CMP_F32_LE,
-        &&CMP_F64_LE,
-        &&CMP_NOT,
+        &&HANDLE_CMP_WORD_EQ,
+        &&HANDLE_CMP_DWORD_EQ,
+        &&HANDLE_CMP_WORD_NE,
+        &&HANDLE_CMP_DWORD_NE,
+        &&HANDLE_CMP_I32_GT,
+        &&HANDLE_CMP_I64_GT,
+        &&HANDLE_CMP_U32_GT,
+        &&HANDLE_CMP_U64_GT,
+        &&HANDLE_CMP_F32_GT,
+        &&HANDLE_CMP_F64_GT,
+        &&HANDLE_CMP_I32_LT,
+        &&HANDLE_CMP_I64_LT,
+        &&HANDLE_CMP_U32_LT,
+        &&HANDLE_CMP_U64_LT,
+        &&HANDLE_CMP_F32_LT,
+        &&HANDLE_CMP_F64_LT,
+        &&HANDLE_CMP_I32_GE,
+        &&HANDLE_CMP_I64_GE,
+        &&HANDLE_CMP_U32_GE,
+        &&HANDLE_CMP_U64_GE,
+        &&HANDLE_CMP_F32_GE,
+        &&HANDLE_CMP_F64_GE,
+        &&HANDLE_CMP_I32_LE,
+        &&HANDLE_CMP_I64_LE,
+        &&HANDLE_CMP_U32_LE,
+        &&HANDLE_CMP_U64_LE,
+        &&HANDLE_CMP_F32_LE,
+        &&HANDLE_CMP_F64_LE,
+        &&HANDLE_CMP_NOT,
 
-        &&DUP_WORD,
-        &&DUP_DWORD,
-        &&DUP_WORD_X1,
-        &&DUP_DWORD_X1,
-        &&DUP_WORD_X2,
-        &&DUP_DWORD_X2,
-        &&SWAP_WORD,
-        &&SWAP_DWORD,
+        &&HANDLE_DUP_WORD,
+        &&HANDLE_DUP_DWORD,
+        &&HANDLE_DUP_WORD_X1,
+        &&HANDLE_DUP_DWORD_X1,
+        &&HANDLE_DUP_WORD_X2,
+        &&HANDLE_DUP_DWORD_X2,
+        &&HANDLE_SWAP_WORD,
+        &&HANDLE_SWAP_DWORD,
 
-        &&LOAD_BYTE,
-        &&LOAD_BYTE,
-        &&LOAD_BYTE,
-        &&LOAD_BYTE,
-        &&LOAD_HWORD,
-        &&LOAD_HWORD,
-        &&LOAD_WORD,
-        &&LOAD_DWORD,
-        &&LOAD_WORDS,
+        &&HANDLE_LOAD_BYTE,
+        &&HANDLE_LOAD_BYTE,
+        &&HANDLE_LOAD_BYTE,
+        &&HANDLE_LOAD_BYTE,
+        &&HANDLE_LOAD_HWORD,
+        &&HANDLE_LOAD_HWORD,
+        &&HANDLE_LOAD_WORD,
+        &&HANDLE_LOAD_DWORD,
+        &&HANDLE_LOAD_WORDS,
 
-        &&STORE_BYTE,
-        &&STORE_BYTE,
-        &&STORE_BYTE,
-        &&STORE_BYTE,
-        &&STORE_HWORD,
-        &&STORE_HWORD,
-        &&STORE_WORD,
-        &&STORE_DWORD,
-        &&STORE_WORDS,
+        &&HANDLE_STORE_BYTE,
+        &&HANDLE_STORE_BYTE,
+        &&HANDLE_STORE_BYTE,
+        &&HANDLE_STORE_BYTE,
+        &&HANDLE_STORE_HWORD,
+        &&HANDLE_STORE_HWORD,
+        &&HANDLE_STORE_WORD,
+        &&HANDLE_STORE_DWORD,
+        &&HANDLE_STORE_WORDS,
 
-        &&LOAD_OFST_BYTE,
-        &&LOAD_OFST_BYTE,
-        &&LOAD_OFST_BYTE,
-        &&LOAD_OFST_BYTE,
-        &&LOAD_OFST_HWORD,
-        &&LOAD_OFST_HWORD,
-        &&LOAD_OFST_WORD,
-        &&LOAD_OFST_DWORD,
-        &&LOAD_OFST_WORDS,
+        &&HANDLE_LOAD_OFST_BYTE,
+        &&HANDLE_LOAD_OFST_BYTE,
+        &&HANDLE_LOAD_OFST_BYTE,
+        &&HANDLE_LOAD_OFST_BYTE,
+        &&HANDLE_LOAD_OFST_HWORD,
+        &&HANDLE_LOAD_OFST_HWORD,
+        &&HANDLE_LOAD_OFST_WORD,
+        &&HANDLE_LOAD_OFST_DWORD,
+        &&HANDLE_LOAD_OFST_WORDS,
 
-        &&STORE_OFST_BYTE,
-        &&STORE_OFST_BYTE,
-        &&STORE_OFST_BYTE,
-        &&STORE_OFST_BYTE,
-        &&STORE_OFST_HWORD,
-        &&STORE_OFST_HWORD,
-        &&STORE_OFST_WORD,
-        &&STORE_OFST_DWORD,
-        &&STORE_OFST_WORDS,
+        &&HANDLE_STORE_OFST_BYTE,
+        &&HANDLE_STORE_OFST_BYTE,
+        &&HANDLE_STORE_OFST_BYTE,
+        &&HANDLE_STORE_OFST_BYTE,
+        &&HANDLE_STORE_OFST_HWORD,
+        &&HANDLE_STORE_OFST_HWORD,
+        &&HANDLE_STORE_OFST_WORD,
+        &&HANDLE_STORE_OFST_DWORD,
+        &&HANDLE_STORE_OFST_WORDS,
 
-        &&LOAD_BUFF_BYTE_VAL,
-        &&LOAD_BUFF_HWORD_VAL,
-        &&LOAD_BUFF_WORD_VAL,
-        &&LOAD_BUFF_DWORD_VAL,
-        &&LOAD_BUFF_WORDS_VAL,
+        &&HANDLE_LOAD_BUFF_BYTE_VAL,
+        &&HANDLE_LOAD_BUFF_HWORD_VAL,
+        &&HANDLE_LOAD_BUFF_WORD_VAL,
+        &&HANDLE_LOAD_BUFF_DWORD_VAL,
+        &&HANDLE_LOAD_BUFF_WORDS_VAL,
 
-        &&LOAD_BUFF_BYTE_REF,
-        &&LOAD_BUFF_HWORD_REF,
-        &&LOAD_BUFF_WORD_REF,
-        &&LOAD_BUFF_DWORD_REF,
-        &&LOAD_BUFF_WORDS_REF,
+        &&HANDLE_LOAD_BUFF_BYTE_REF,
+        &&HANDLE_LOAD_BUFF_HWORD_REF,
+        &&HANDLE_LOAD_BUFF_WORD_REF,
+        &&HANDLE_LOAD_BUFF_DWORD_REF,
+        &&HANDLE_LOAD_BUFF_WORDS_REF,
 
-        &&STORE_BUFF_BYTE,
-        &&STORE_BUFF_HWORD,
-        &&STORE_BUFF_WORD,
-        &&STORE_BUFF_DWORD,
-        &&STORE_BUFF_WORDS,
+        &&HANDLE_STORE_BUFF_BYTE,
+        &&HANDLE_STORE_BUFF_HWORD,
+        &&HANDLE_STORE_BUFF_WORD,
+        &&HANDLE_STORE_BUFF_DWORD,
+        &&HANDLE_STORE_BUFF_WORDS,
 
-        &&ALLOC,
-        &&FREE,
+        &&HANDLE_ALLOC,
+        &&HANDLE_FREE,
 
-        &&JMP,
-        &&JMP_IF,
-        &&CALL,
-        &&SYSCALL,
-        &&RET,
-        &&NOT_IMPLEMENTED,
-        &&NOT_IMPLEMENTED,
-        &&NOT_IMPLEMENTED,
-        &&NOT_IMPLEMENTED,
-        &&NOT_IMPLEMENTED,
-        &&NOT_IMPLEMENTED,
-        &&NOT_IMPLEMENTED,
-        &&NOT_IMPLEMENTED,
-        &&NOT_IMPLEMENTED,
-        &&NOT_IMPLEMENTED,
-        &&NOT_IMPLEMENTED,
-        &&NOT_IMPLEMENTED,
-        &&NOT_IMPLEMENTED,
-        &&NOT_IMPLEMENTED,
-        &&NOT_IMPLEMENTED,
-        &&NOT_IMPLEMENTED,
-        &&NOT_IMPLEMENTED,
-        &&NOT_IMPLEMENTED,
-        &&NOT_IMPLEMENTED,
-        &&NOT_IMPLEMENTED,
-        &&NOT_IMPLEMENTED,
-        &&NOT_IMPLEMENTED,
-        &&NOT_IMPLEMENTED,
-        &&NOT_IMPLEMENTED,
-        &&NOT_IMPLEMENTED,
-        &&NOT_IMPLEMENTED,
-        &&NOT_IMPLEMENTED,
-        &&NOT_IMPLEMENTED,
-        &&NOT_IMPLEMENTED,
-        &&NOT_IMPLEMENTED,
-        &&NOT_IMPLEMENTED,
-        &&NOT_IMPLEMENTED,
-        &&NOT_IMPLEMENTED,
-        &&NOT_IMPLEMENTED,
-        &&NOT_IMPLEMENTED,
-        &&NOT_IMPLEMENTED,
-        &&NOT_IMPLEMENTED,
-        &&NOT_IMPLEMENTED,
-        &&NOT_IMPLEMENTED,
-        &&NOT_IMPLEMENTED,
-        &&NOT_IMPLEMENTED,
-        &&NOT_IMPLEMENTED,
-        &&NOT_IMPLEMENTED,
+        &&HANDLE_JMP,
+        &&HANDLE_JMP_IF,
+        &&HANDLE_CALL,
+        &&HANDLE_INDCALL,
+        &&HANDLE_SYSCALL,
+        &&HANDLE_RET,
+        &&HANDLE_NOT_IMPLEMENTED,
+        &&HANDLE_NOT_IMPLEMENTED,
+        &&HANDLE_NOT_IMPLEMENTED,
+        &&HANDLE_NOT_IMPLEMENTED,
+        &&HANDLE_NOT_IMPLEMENTED,
+        &&HANDLE_NOT_IMPLEMENTED,
+        &&HANDLE_NOT_IMPLEMENTED,
+        &&HANDLE_NOT_IMPLEMENTED,
+        &&HANDLE_NOT_IMPLEMENTED,
+        &&HANDLE_NOT_IMPLEMENTED,
+        &&HANDLE_NOT_IMPLEMENTED,
+        &&HANDLE_NOT_IMPLEMENTED,
+        &&HANDLE_NOT_IMPLEMENTED,
+        &&HANDLE_NOT_IMPLEMENTED,
+        &&HANDLE_NOT_IMPLEMENTED,
+        &&HANDLE_NOT_IMPLEMENTED,
+        &&HANDLE_NOT_IMPLEMENTED,
+        &&HANDLE_NOT_IMPLEMENTED,
+        &&HANDLE_NOT_IMPLEMENTED,
+        &&HANDLE_NOT_IMPLEMENTED,
+        &&HANDLE_NOT_IMPLEMENTED,
+        &&HANDLE_NOT_IMPLEMENTED,
+        &&HANDLE_NOT_IMPLEMENTED,
+        &&HANDLE_NOT_IMPLEMENTED,
+        &&HANDLE_NOT_IMPLEMENTED,
+        &&HANDLE_NOT_IMPLEMENTED,
+        &&HANDLE_NOT_IMPLEMENTED,
+        &&HANDLE_NOT_IMPLEMENTED,
+        &&HANDLE_NOT_IMPLEMENTED,
+        &&HANDLE_NOT_IMPLEMENTED,
+        &&HANDLE_NOT_IMPLEMENTED,
+        &&HANDLE_NOT_IMPLEMENTED,
+        &&HANDLE_NOT_IMPLEMENTED,
+        &&HANDLE_NOT_IMPLEMENTED,
+        &&HANDLE_NOT_IMPLEMENTED,
+        &&HANDLE_NOT_IMPLEMENTED,
+        &&HANDLE_NOT_IMPLEMENTED,
+        &&HANDLE_NOT_IMPLEMENTED,
+        &&HANDLE_NOT_IMPLEMENTED,
 };
 #pragma endregion
     const void * const *instructionTable = InstructionPointers;
 LOOP:
     pc += 1;
     goto *instructionTable[opcode];
-NOT_IMPLEMENTED:
+HANDLE_NOT_IMPLEMENTED:
     UNLIKELY(false, "Version not supported!\n");
     exit(EXIT_FAILURE);
-BREAKPOINT:
+HANDLE_BREAKPOINT:
     DEVEL_ASSERT(false, "Breakpoint reached!\n");
     CONTINUE;
 #pragma region Push local
-PUSH_BYTE:
+HANDLE_PUSH_BYTE:
     {
         sz l = iNextU8(&pc);
         sz b = opcode - OP_PUSH_BYTE_0;
         LOCAL_PUSH_BYTE(sp, fp, l, b);
     }
     CONTINUE;
-PUSH_HWORD:
+HANDLE_PUSH_HWORD:
     {
         sz l = iNextU8(&pc);
         sz h = opcode - OP_PUSH_HWORD_0;
         LOCAL_PUSH_HWORD(sp, fp, l, h);
     }
     CONTINUE;
-PUSH_WORD:
+HANDLE_PUSH_WORD:
     {
         sz l = iNextU8(&pc);
         LOCAL_PUSH_WORD(sp, fp, l);
     }
     CONTINUE;
-PUSH_WORD_L:
+HANDLE_PUSH_WORD_L:
     {
         sz l = opcode - OP_PUSH_WORD_0;
         LOCAL_PUSH_WORD(sp, fp, l);
     }
     CONTINUE;
-PUSH_DWORD:
+HANDLE_PUSH_DWORD:
     {
         sz l = iNextU8(&pc);
         LOCAL_PUSH_DWORD(sp, fp, l);
     }
     CONTINUE;
-PUSH_DWORD_L:
+HANDLE_PUSH_DWORD_L:
     {
         sz l = opcode - OP_PUSH_DWORD_0;
         LOCAL_PUSH_DWORD(sp, fp, l);
     }
     CONTINUE;
-PUSH_WORDS:
+HANDLE_PUSH_WORDS:
     {
         sz l = iNextU8(&pc);
         sz n = iNextU8(&pc) + 1;
         LOCAL_PUSH_WORDS(sp, fp, l, n);
     }
     CONTINUE;
-PUSH_REF:
+HANDLE_PUSH_REF:
     {
         sz l      = iNextU8(&pc);
         DWord ref = RefToDWord(fp + LOCALS_OFFSET + l); 
@@ -657,49 +657,49 @@ PUSH_REF:
     CONTINUE;
 #pragma endregion
 #pragma region Push Immediate
-PUSH_I32_V:
+HANDLE_PUSH_I32_V:
     {
         Word w = IntToWord(opcode - OP_PUSH_0_WORD);
         VAL_PUSH_WORD(sp, w);
     }
     CONTINUE;
-PUSH_I64_V:
+HANDLE_PUSH_I64_V:
     {
         DWord d = IntToDWord(opcode - OP_PUSH_0_DWORD);
         VAL_PUSH_DWORD(sp, d);
     }
     CONTINUE;
-PUSH_F32_1:
+HANDLE_PUSH_F32_1:
     {
         Word w = FloatToWord(1.0f);
         VAL_PUSH_WORD(sp, w);
     }    
     CONTINUE;
-PUSH_F32_2:
+HANDLE_PUSH_F32_2:
     {
         Word w = FloatToWord(2.0f);
         VAL_PUSH_WORD(sp, w);
     }    
     CONTINUE;
-PUSH_F64_1:
+HANDLE_PUSH_F64_1:
     {
         DWord d = FloatToDWord(1.0);
         VAL_PUSH_DWORD(sp, d);
     }    
     CONTINUE;
-PUSH_F64_2:
+HANDLE_PUSH_F64_2:
     {
         DWord d = FloatToDWord(2.0);
         VAL_PUSH_DWORD(sp, d);
     }    
     CONTINUE;
-PUSH_I32:
+HANDLE_PUSH_I32:
     {
         Word w = IntToWord((i32)iNextI8(&pc));
         VAL_PUSH_WORD(sp, w);
     }
     CONTINUE;
-PUSH_I64:
+HANDLE_PUSH_I64:
     {
         DWord d = IntToDWord((i64)iNextI8(&pc));
         VAL_PUSH_DWORD(sp, d);
@@ -707,83 +707,87 @@ PUSH_I64:
     CONTINUE;
 #pragma endregion
 #pragma region Push Constant
-PUSH_CONST_WORD:
+HANDLE_PUSH_CONST_WORD:
     {
         Word w = *(wordPool + iNextU8(&pc));
         VAL_PUSH_WORD(sp, w);
     }
     CONTINUE;
-PUSH_CONST_WORD_W:
+HANDLE_PUSH_CONST_WORD_W:
     {
         Word w = *(wordPool + iNextU16(&pc));
         VAL_PUSH_WORD(sp, w);
     }    
     CONTINUE;
-PUSH_CONST_DWORD:
+HANDLE_PUSH_CONST_DWORD:
     {
         DWord d = *(dwordPool + iNextU8(&pc));
         VAL_PUSH_DWORD(sp, d);
     }    
     CONTINUE;
-PUSH_CONST_DWORD_W:
+HANDLE_PUSH_CONST_DWORD_W:
     {
         DWord d = *(dwordPool + iNextU16(&pc));
         VAL_PUSH_DWORD(sp, d);
     }    
     CONTINUE;
-PUSH_CONST_STR:
+HANDLE_PUSH_CONST_STR:
     {
         DWord d = RefToDWord(*(stringPool + iNextU8(&pc)));
         VAL_PUSH_DWORD(sp, d);
     }    
     CONTINUE;
-PUSH_CONST_STR_W:
+HANDLE_PUSH_CONST_STR_W:
     {
         DWord d = RefToDWord(*(stringPool + iNextU16(&pc)));
         VAL_PUSH_DWORD(sp, d);
     }    
     CONTINUE;
+HANDLE_PUSH_GLOB_REF:
+HANDLE_PUSH_GLOB_REF_W:
+HANDLE_PUSH_FUNC:
+    goto HANDLE_NOT_IMPLEMENTED;
 #pragma endregion
 #pragma region Pop
-POP_BYTE:
+HANDLE_POP_BYTE:
     {
         sz l = iNextU8(&pc);
         sz b = opcode - OP_POP_BYTE_0;
         POP_BYTE(sp, fp, l, b);
     }
     CONTINUE;
-POP_HWORD:
+HANDLE_POP_HWORD:
     {
         sz l = iNextU8(&pc);
         sz h = opcode - OP_POP_HWORD_0;
         POP_HWORD(sp, fp, l, h);
     }
     CONTINUE;
-POP_WORD:
+HANDLE_POP_WORD:
     {
         sz l = iNextU8(&pc);
         POP_WORD(sp, fp, l);
     }
     CONTINUE;
-POP_WORD_L:
+HANDLE_POP_WORD_L:
     {
         sz l = opcode - OP_POP_WORD_0;
         POP_WORD(sp, fp, l);
     }
     CONTINUE;
-POP_DWORD:
+HANDLE_POP_DWORD:
     {
         sz l = iNextU8(&pc);
         POP_DWORD(sp, fp, l);
     }
     CONTINUE;
-POP_DWORD_L:
+HANDLE_POP_DWORD_L:
     {
         sz l = opcode - OP_POP_DWORD_0;
         POP_DWORD(sp, fp, l);
     }
     CONTINUE;
-POP_WORDS:
+HANDLE_POP_WORDS:
     {
         sz l = iNextU8(&pc);
         sz n = iNextU8(&pc);
@@ -792,339 +796,339 @@ POP_WORDS:
     CONTINUE;
 #pragma endregion
 #pragma region Arithmetic
-ADD_I32:
+HANDLE_ADD_I32:
     BINARY_OPERATION_WORD(sp, Int, +);
     CONTINUE;
-ADD_I64:
+HANDLE_ADD_I64:
     BINARY_OPERATION_DWORD(sp, Int, +);
     CONTINUE;
-ADD_F32:
+HANDLE_ADD_F32:
     BINARY_OPERATION_WORD(sp, Float, +);
     CONTINUE;
-ADD_F64:
+HANDLE_ADD_F64:
     BINARY_OPERATION_DWORD(sp, Float, +);
     CONTINUE;
-INC_I32:
+HANDLE_INC_I32:
     {
         sz l = iNextU8(&pc);
         i32 v = (i32) iNextU8(&pc);
         LOCAL_BINARY_OPERATION_WORD(fp, Int, +, l, v);
     }
     CONTINUE;
-INC_I64:
+HANDLE_INC_I64:
     {
         u8 l = iNextU8(&pc);
         i64 v = (i64) iNextU8(&pc);
         LOCAL_BINARY_OPERATION_DWORD(fp, Int, +, l, v);
     }
     CONTINUE;
-INC_F32:
+HANDLE_INC_F32:
     {
         u8 l = iNextU8(&pc);
         f32 v = (f32) iNextU8(&pc);
         LOCAL_BINARY_OPERATION_WORD(fp, Float, +, l, v);
     }
     CONTINUE;
-INC_F64:
+HANDLE_INC_F64:
     {
         u8 l = iNextU8(&pc);
         f64 v = (f64) iNextU8(&pc);
         LOCAL_BINARY_OPERATION_DWORD(fp, Float, +, l, v);
     }
     CONTINUE;
-SUB_I32:
+HANDLE_SUB_I32:
     BINARY_OPERATION_WORD(sp, Int, -);
     CONTINUE;
-SUB_I64:
+HANDLE_SUB_I64:
     BINARY_OPERATION_DWORD(sp, Int, -);
     CONTINUE;
-SUB_F32:
+HANDLE_SUB_F32:
     BINARY_OPERATION_WORD(sp, Float, -);
     CONTINUE;
-SUB_F64:
+HANDLE_SUB_F64:
     BINARY_OPERATION_DWORD(sp, Float, -);
     CONTINUE;
-DEC_I32:
+HANDLE_DEC_I32:
     {
         u8 l = iNextU8(&pc);
         i32 v = (i32) iNextU8(&pc);
         LOCAL_BINARY_OPERATION_WORD(fp, Int, -, l, v);
     }
     CONTINUE;
-DEC_I64:
+HANDLE_DEC_I64:
     {
         u8 l = iNextU8(&pc);
         i64 v = (i64) iNextU8(&pc);
         LOCAL_BINARY_OPERATION_DWORD(fp, Int, -, l, v);
     }
     CONTINUE;
-DEC_F32:
+HANDLE_DEC_F32:
     {
         u8 l = iNextU8(&pc);
         f32 v = (f32) iNextU8(&pc);
         LOCAL_BINARY_OPERATION_WORD(fp, Float, -, l, v);
     }
     CONTINUE;
-DEC_F64:
+HANDLE_DEC_F64:
     {
         u8 l = iNextU8(&pc);
         f64 v = (f64) iNextU8(&pc);
         LOCAL_BINARY_OPERATION_DWORD(fp, Float, -, l, v);
     }
     CONTINUE;
-MUL_I32:
+HANDLE_MUL_I32:
     BINARY_OPERATION_WORD(sp, Int, *);
     CONTINUE;
-MUL_I64:
+HANDLE_MUL_I64:
     BINARY_OPERATION_DWORD(sp, Int, *);
     CONTINUE;
-MUL_U32:
+HANDLE_MUL_U32:
     BINARY_OPERATION_WORD(sp, UInt, *);
     CONTINUE;
-MUL_U64:
+HANDLE_MUL_U64:
     BINARY_OPERATION_DWORD(sp, UInt, *);
     CONTINUE;
-MUL_F32:
+HANDLE_MUL_F32:
     BINARY_OPERATION_WORD(sp, Float, *);
     CONTINUE;
-MUL_F64:
+HANDLE_MUL_F64:
     BINARY_OPERATION_DWORD(sp, Float,*);
     CONTINUE;
-DIV_I32:
+HANDLE_DIV_I32:
     BINARY_OPERATION_WORD(sp, Int, /);
     CONTINUE;
-DIV_I64:
+HANDLE_DIV_I64:
     BINARY_OPERATION_DWORD(sp, Int, /);
     CONTINUE;
-DIV_U32:
+HANDLE_DIV_U32:
     BINARY_OPERATION_WORD(sp, UInt, /);
     CONTINUE;
-DIV_U64:
+HANDLE_DIV_U64:
     BINARY_OPERATION_DWORD(sp, UInt, /);
     CONTINUE;
-DIV_F32:
+HANDLE_DIV_F32:
     BINARY_OPERATION_WORD(sp, Float, /);
     CONTINUE;
-DIV_F64:
+HANDLE_DIV_F64:
     BINARY_OPERATION_DWORD(sp, Float,/);
     CONTINUE;
-REM_I32:
+HANDLE_REM_I32:
     BINARY_OPERATION_WORD(sp, Int, %);
     CONTINUE;
-REM_I64:
+HANDLE_REM_I64:
     BINARY_OPERATION_DWORD(sp, Int, %);
     CONTINUE;
-REM_U32:
+HANDLE_REM_U32:
     BINARY_OPERATION_WORD(sp, UInt, %);
     CONTINUE;
-REM_U64:
+HANDLE_REM_U64:
     BINARY_OPERATION_DWORD(sp, UInt, %);
     CONTINUE;
-NEG_I32:
+HANDLE_NEG_I32:
     UNARY_OPERATION_WORD(sp, Int, -);
     CONTINUE;
-NEG_I64:
+HANDLE_NEG_I64:
     UNARY_OPERATION_DWORD(sp, Int, -);
     CONTINUE;
-NEG_F32:
+HANDLE_NEG_F32:
     UNARY_OPERATION_WORD(sp, Float, -);
     CONTINUE;
-NEG_F64:
+HANDLE_NEG_F64:
     UNARY_OPERATION_DWORD(sp, Float, -);
     CONTINUE;
 #pragma endregion
 #pragma region Bitwise
-NOT_WORD:
+HANDLE_NOT_WORD:
     UNARY_OPERATION_WORD(sp, Int, ~);
     CONTINUE;
-NOT_DWORD:
+HANDLE_NOT_DWORD:
     UNARY_OPERATION_DWORD(sp, Int, ~);
     CONTINUE;
-AND_WORD:
+HANDLE_AND_WORD:
     BINARY_OPERATION_WORD(sp, Int, &);
     CONTINUE;
-AND_DWORD:
+HANDLE_AND_DWORD:
     BINARY_OPERATION_DWORD(sp, Int, &);
     CONTINUE;
-OR_WORD:
+HANDLE_OR_WORD:
     BINARY_OPERATION_WORD(sp, Int, |);
     CONTINUE;
-OR_DWORD:
+HANDLE_OR_DWORD:
     BINARY_OPERATION_DWORD(sp, Int, |);
     CONTINUE;
-XOR_WORD:
+HANDLE_XOR_WORD:
     BINARY_OPERATION_WORD(sp, Int, ^);
     CONTINUE;
-XOR_DWORD:
+HANDLE_XOR_DWORD:
     BINARY_OPERATION_DWORD(sp, Int, ^);
     CONTINUE;
-SHL_WORD:
+HANDLE_SHL_WORD:
     BINARY_OPERATION_WORD(sp, Int, <<);
     CONTINUE;
-SHL_DWORD:
+HANDLE_SHL_DWORD:
     BINARY_OPERATION_DWORD(sp, Int, <<);
     CONTINUE;
-SHR_I32:
+HANDLE_SHR_I32:
     BINARY_OPERATION_WORD(sp, Int, >>);
     CONTINUE;
-SHR_I64:
+HANDLE_SHR_I64:
     // TO-DO:FIX
     BINARY_OPERATION_DWORD(sp, Int, >>);
     CONTINUE;
-SHR_U32:
+HANDLE_SHR_U32:
     BINARY_OPERATION_WORD(sp, UInt, >>);
     CONTINUE;
-SHR_U64:
+HANDLE_SHR_U64:
     // TO-DO:FIX
     BINARY_OPERATION_DWORD(sp, UInt, >>);
     CONTINUE;
 #pragma endregion    
 #pragma region Cast
-I32_TO_I8:
+HANDLE_I32_TO_I8:
     CAST_WORD_WORD(sp, Int, Int, i8);
     CONTINUE;
-I32_TO_I16:
+HANDLE_I32_TO_I16:
     CAST_WORD_WORD(sp, Int, Int, i16);
     CONTINUE;
-I32_TO_I64:
+HANDLE_I32_TO_I64:
     CAST_WORD_DWORD(sp, Int, Int, i64);
     CONTINUE;
-I32_TO_F32:
+HANDLE_I32_TO_F32:
     CAST_WORD_WORD(sp, Int, Float, f32);
     CONTINUE;
-I32_TO_F64:
+HANDLE_I32_TO_F64:
     CAST_WORD_DWORD(sp, Int, Float, f64);
     CONTINUE;
-I64_TO_I32:
+HANDLE_I64_TO_I32:
     CAST_DWORD_WORD(sp, Int, Int, i32);
     CONTINUE;
-I64_TO_F32:
+HANDLE_I64_TO_F32:
     CAST_DWORD_WORD(sp, Int, Float, f32);
     CONTINUE;
-I64_TO_F64:
+HANDLE_I64_TO_F64:
     CAST_DWORD_DWORD(sp, Int, Float, f64);
     CONTINUE;
-F32_TO_I32:
+HANDLE_F32_TO_I32:
     CAST_WORD_WORD(sp, Float, Int, i32);
     CONTINUE;
-F32_TO_I64:
+HANDLE_F32_TO_I64:
     CAST_WORD_WORD(sp, Float, Int, i64);
     CONTINUE;
-F32_TO_F64:
+HANDLE_F32_TO_F64:
     CAST_WORD_DWORD(sp, Float, Float, f64);
     CONTINUE;
-F64_TO_I32:
+HANDLE_F64_TO_I32:
     CAST_DWORD_WORD(sp, Float, Int, i32);
     CONTINUE;
-F64_TO_I64:
+HANDLE_F64_TO_I64:
     CAST_DWORD_DWORD(sp, Float, Int, i64);
     CONTINUE;
-F64_TO_F32:
+HANDLE_F64_TO_F32:
     CAST_DWORD_WORD(sp, Float, Float, f32);
     CONTINUE;
 #pragma endregion
 #pragma region Compare
-CMP_WORD_EQ:
+HANDLE_CMP_WORD_EQ:
     BINARY_OPERATION_WORD(sp, Int, ==);
     CONTINUE;
-CMP_DWORD_EQ:
+HANDLE_CMP_DWORD_EQ:
     BINARY_OPERATION_DWORD(sp, Int, ==);
     CONTINUE;
-CMP_WORD_NE:
+HANDLE_CMP_WORD_NE:
     BINARY_OPERATION_WORD(sp, Int, !=);
     CONTINUE;
-CMP_DWORD_NE:
+HANDLE_CMP_DWORD_NE:
     BINARY_OPERATION_DWORD(sp, Int, !=);
     CONTINUE;
-CMP_I32_GT:
+HANDLE_CMP_I32_GT:
     BINARY_OPERATION_WORD(sp, Int, >);
     CONTINUE;
-CMP_I64_GT:
+HANDLE_CMP_I64_GT:
     BINARY_OPERATION_DWORD(sp, Int, >);
     CONTINUE;
-CMP_U32_GT:
+HANDLE_CMP_U32_GT:
     BINARY_OPERATION_WORD(sp, UInt, >);
     CONTINUE;
-CMP_U64_GT:
+HANDLE_CMP_U64_GT:
     BINARY_OPERATION_DWORD(sp, UInt, >);
     CONTINUE;
-CMP_F32_GT:
+HANDLE_CMP_F32_GT:
     BINARY_OPERATION_WORD(sp, Float, >);
     CONTINUE;
-CMP_F64_GT:
+HANDLE_CMP_F64_GT:
     BINARY_OPERATION_DWORD(sp, Float, >);
     CONTINUE;
-CMP_I32_LT:
+HANDLE_CMP_I32_LT:
     BINARY_OPERATION_WORD(sp, Int, <);
     CONTINUE;
-CMP_I64_LT:
+HANDLE_CMP_I64_LT:
     BINARY_OPERATION_DWORD(sp, Int, <);
     CONTINUE;
-CMP_U32_LT:
+HANDLE_CMP_U32_LT:
     BINARY_OPERATION_WORD(sp, UInt, <);
     CONTINUE;
-CMP_U64_LT:
+HANDLE_CMP_U64_LT:
     BINARY_OPERATION_DWORD(sp, UInt, <);
     CONTINUE;
-CMP_F32_LT:
+HANDLE_CMP_F32_LT:
     BINARY_OPERATION_WORD(sp, Float, <);
     CONTINUE;
-CMP_F64_LT:
+HANDLE_CMP_F64_LT:
     BINARY_OPERATION_DWORD(sp, Float, <);
     CONTINUE;
-CMP_I32_GE:
+HANDLE_CMP_I32_GE:
     BINARY_OPERATION_WORD(sp, Int, >=);
     CONTINUE;
-CMP_I64_GE:
+HANDLE_CMP_I64_GE:
     BINARY_OPERATION_DWORD(sp, Int, >=);
     CONTINUE;
-CMP_U32_GE:
+HANDLE_CMP_U32_GE:
     BINARY_OPERATION_WORD(sp, UInt, >=);
     CONTINUE;
-CMP_U64_GE:
+HANDLE_CMP_U64_GE:
     BINARY_OPERATION_DWORD(sp, UInt, >=);
     CONTINUE;
-CMP_F32_GE:
+HANDLE_CMP_F32_GE:
     BINARY_OPERATION_WORD(sp, Float, >=);
     CONTINUE;
-CMP_F64_GE:
+HANDLE_CMP_F64_GE:
     BINARY_OPERATION_DWORD(sp, Float, >=);
     CONTINUE;
-CMP_I32_LE:
+HANDLE_CMP_I32_LE:
     BINARY_OPERATION_WORD(sp, Int, <=);
     CONTINUE;
-CMP_I64_LE:
+HANDLE_CMP_I64_LE:
     BINARY_OPERATION_DWORD(sp, Int, <=);
     CONTINUE;
-CMP_U32_LE:
+HANDLE_CMP_U32_LE:
     BINARY_OPERATION_WORD(sp, UInt, <=);
     CONTINUE;
-CMP_U64_LE:
+HANDLE_CMP_U64_LE:
     BINARY_OPERATION_DWORD(sp, UInt, <=);
     CONTINUE;
-CMP_F32_LE:
+HANDLE_CMP_F32_LE:
     BINARY_OPERATION_WORD(sp, Float, <=);
     CONTINUE;
-CMP_F64_LE:
+HANDLE_CMP_F64_LE:
     BINARY_OPERATION_DWORD(sp, Float, <=);
     CONTINUE;
-CMP_NOT:
+HANDLE_CMP_NOT:
     UNARY_OPERATION_WORD(sp, Int, !);
     CONTINUE;
 #pragma endregion    
 #pragma region Stack manipulation
-DUP_WORD:
+HANDLE_DUP_WORD:
     {
         *(sp - 0) = *(sp - 1);    
         sp += 1;    
     }
     CONTINUE;
-DUP_DWORD:
+HANDLE_DUP_DWORD:
     {
         *(DWord*)(sp + 0) = *(DWord*)(sp - 2);
         sp += 2;
     }  
-DUP_WORD_X1:
+HANDLE_DUP_WORD_X1:
     {
         Word top = *(sp - 1);
         *(sp - 1) = *(sp - 2);
@@ -1133,7 +1137,7 @@ DUP_WORD_X1:
         sp += 1;    
     }
     CONTINUE;
-DUP_DWORD_X1:
+HANDLE_DUP_DWORD_X1:
     {
         DWord top;
         Word bottom;
@@ -1145,7 +1149,7 @@ DUP_DWORD_X1:
         sp += 2;
     }  
     CONTINUE;
-DUP_WORD_X2:
+HANDLE_DUP_WORD_X2:
     {
         Word top  = *(sp - 1);
         *(DWord*)(sp - 2) = *(DWord*)(sp - 3);
@@ -1154,7 +1158,7 @@ DUP_WORD_X2:
         sp += 1;    
     }
     CONTINUE;
-DUP_DWORD_X2:
+HANDLE_DUP_DWORD_X2:
     {
         DWord top, bottom;
         bottom = *(DWord*)(sp - 4);
@@ -1165,14 +1169,14 @@ DUP_DWORD_X2:
         sp += 2;
     }  
     CONTINUE;
-SWAP_WORD:
+HANDLE_SWAP_WORD:
     {
         Word top = *(sp - 1);
         *(sp - 1) = *(sp - 2);
         *(sp - 2) = top;
     }
     CONTINUE;
-SWAP_DWORD:
+HANDLE_SWAP_DWORD:
     {
         DWord top = *(DWord*)(sp - 2);
         *(DWord*)(sp - 2) = *(DWord*)(sp - 4);
@@ -1181,25 +1185,25 @@ SWAP_DWORD:
     CONTINUE;
 #pragma endregion   
 #pragma region Standard Load & Store
-LOAD_BYTE:
+HANDLE_LOAD_BYTE:
     {
         sz b = opcode - OP_LOAD_BYTE_0;
         LOAD_BYTE(sp, 0, b);
     }
     CONTINUE;
-LOAD_HWORD:
+HANDLE_LOAD_HWORD:
     {
         sz h = opcode - OP_LOAD_HWORD_0;
         LOAD_HWORD(sp, 0, h);
     }
     CONTINUE;
-LOAD_WORD:
+HANDLE_LOAD_WORD:
     LOAD_WORD(sp, 0);
     CONTINUE;
-LOAD_DWORD:
+HANDLE_LOAD_DWORD:
     LOAD_DWORD(sp, 0);
     CONTINUE;
-LOAD_WORDS:
+HANDLE_LOAD_WORDS:
     {
         sz n = iNextU8(&pc) + 1;
         DWord ref;
@@ -1210,25 +1214,25 @@ LOAD_WORDS:
         sp += n;
         sp -= 2;
     }
-STORE_BYTE:
+HANDLE_STORE_BYTE:
     {
         sz b = opcode - OP_STORE_BYTE_0;
         STORE_BYTE(sp, 0, b);
     }
     CONTINUE;
-STORE_HWORD:
+HANDLE_STORE_HWORD:
     {
         sz h = opcode - OP_STORE_HWORD_0;
         STORE_HWORD(sp, 0, h);
     }
     CONTINUE;
-STORE_WORD:
+HANDLE_STORE_WORD:
     STORE_WORD(sp, 0);
     CONTINUE;
-STORE_DWORD:
+HANDLE_STORE_DWORD:
     STORE_DWORD(sp, 0);
     CONTINUE;
-STORE_WORDS:
+HANDLE_STORE_WORDS:
     {
         sz n = iNextU8(&pc) + 1;
         DWord ref;
@@ -1240,33 +1244,33 @@ STORE_WORDS:
     CONTINUE;
 #pragma endregion
 #pragma region Offsetted Load & Store
-LOAD_OFST_BYTE:
+HANDLE_LOAD_OFST_BYTE:
     {
         sz o = iNextU8(&pc);
         sz b = opcode - OP_LOAD_OFST_BYTE_0;
         LOAD_BYTE(sp, o, b);
     }
     CONTINUE;
-LOAD_OFST_HWORD:
+HANDLE_LOAD_OFST_HWORD:
     {
         sz o = iNextU8(&pc);
         sz h = opcode - OP_LOAD_OFST_HWORD_0;
         LOAD_HWORD(sp, o, h);
     }
     CONTINUE;
-LOAD_OFST_WORD:
+HANDLE_LOAD_OFST_WORD:
     {
         sz o = iNextU8(&pc);
         LOAD_WORD(sp, o);
     }
     CONTINUE;
-LOAD_OFST_DWORD:
+HANDLE_LOAD_OFST_DWORD:
     {
         sz o = iNextU8(&pc);
         LOAD_DWORD(sp, o);
     }
     CONTINUE;
-LOAD_OFST_WORDS:
+HANDLE_LOAD_OFST_WORDS:
     {
         sz o = iNextU8(&pc);
         sz n = iNextU8(&pc) + 1;
@@ -1278,33 +1282,33 @@ LOAD_OFST_WORDS:
         sp += n;
         sp -= 2;
     }
-STORE_OFST_BYTE:
+HANDLE_STORE_OFST_BYTE:
     {
         sz o = iNextU8(&pc);
         sz b = opcode - OP_STORE_OFST_BYTE_0;
         STORE_BYTE(sp, o, b);
     }
     CONTINUE;
-STORE_OFST_HWORD:
+HANDLE_STORE_OFST_HWORD:
     {
         sz o = iNextU8(&pc);
         sz h = opcode - OP_STORE_OFST_HWORD_0;
         STORE_HWORD(sp, o, h);
     }
     CONTINUE;
-STORE_OFST_WORD:
+HANDLE_STORE_OFST_WORD:
     {
         sz o = iNextU8(&pc);
         STORE_WORD(sp, o);
     }
     CONTINUE;
-STORE_OFST_DWORD:
+HANDLE_STORE_OFST_DWORD:
     {
         sz o = iNextU8(&pc);
         STORE_DWORD(sp, o);
     }
     CONTINUE;
-STORE_OFST_WORDS:
+HANDLE_STORE_OFST_WORDS:
     {
         sz o = iNextU8(&pc);
         sz n = iNextU8(&pc) + 1;
@@ -1317,19 +1321,19 @@ STORE_OFST_WORDS:
     CONTINUE;
 #pragma endregion
 #pragma region Buffer Load & Store
-LOAD_BUFF_BYTE_VAL:
+HANDLE_LOAD_BUFF_BYTE_VAL:
     LOAD_BUFF_VAL_WORD(sp, BytePtr);
     CONTINUE;
-LOAD_BUFF_HWORD_VAL:
+HANDLE_LOAD_BUFF_HWORD_VAL:
     LOAD_BUFF_VAL_WORD(sp, HWordPtr);
     CONTINUE;
-LOAD_BUFF_WORD_VAL:
+HANDLE_LOAD_BUFF_WORD_VAL:
     LOAD_BUFF_VAL_WORD(sp, WordPtr);
     CONTINUE;   
-LOAD_BUFF_DWORD_VAL:
+HANDLE_LOAD_BUFF_DWORD_VAL:
     LOAD_BUFF_VAL_DWORD(sp);
     CONTINUE;   
-LOAD_BUFF_WORDS_VAL:
+HANDLE_LOAD_BUFF_WORDS_VAL:
     {
         sz n = iNextU8(&pc) + 1;
         Word i;
@@ -1343,37 +1347,37 @@ LOAD_BUFF_WORDS_VAL:
         sp -= 3;
     }
     CONTINUE;
-LOAD_BUFF_BYTE_REF:
+HANDLE_LOAD_BUFF_BYTE_REF:
     LOAD_BUFF_REF(sp, 1);
     CONTINUE;
-LOAD_BUFF_HWORD_REF:
+HANDLE_LOAD_BUFF_HWORD_REF:
     LOAD_BUFF_REF(sp, 2);
     CONTINUE;
-LOAD_BUFF_WORD_REF:
+HANDLE_LOAD_BUFF_WORD_REF:
     LOAD_BUFF_REF(sp, 4);
     CONTINUE;  
-LOAD_BUFF_DWORD_REF:
+HANDLE_LOAD_BUFF_DWORD_REF:
     LOAD_BUFF_REF(sp, 8);
     CONTINUE;  
-LOAD_BUFF_WORDS_REF:
+HANDLE_LOAD_BUFF_WORDS_REF:
     {
         sz n = iNextU8(&pc) + 1;
         LOAD_BUFF_REF(sp, n * 4);
     }
     CONTINUE;
-STORE_BUFF_BYTE:
+HANDLE_STORE_BUFF_BYTE:
     STORE_BUFF_VAL_WORD(sp, BytePtr, u8);
     CONTINUE;
-STORE_BUFF_HWORD:
+HANDLE_STORE_BUFF_HWORD:
     STORE_BUFF_VAL_WORD(sp, HWordPtr, u16);
     CONTINUE;
-STORE_BUFF_WORD:
+HANDLE_STORE_BUFF_WORD:
     STORE_BUFF_VAL_WORD(sp, WordPtr, u32);
     CONTINUE;
-STORE_BUFF_DWORD:
+HANDLE_STORE_BUFF_DWORD:
     STORE_BUFF_VAL_DWORD(sp);
     CONTINUE;
-STORE_BUFF_WORDS:
+HANDLE_STORE_BUFF_WORDS:
     {
         sz n = iNextU8(&pc) + 1;
         Word i;
@@ -1386,7 +1390,7 @@ STORE_BUFF_WORDS:
         sp -= n + 3;
     }
     CONTINUE;
-ALLOC:
+HANDLE_ALLOC:
     {
         Word sz = *(sp - 1);
         DWord ref = { .Ptr = malloc(sz.UInt) };
@@ -1394,7 +1398,7 @@ ALLOC:
         sp += 1;
     }
     CONTINUE;
-FREE:
+HANDLE_FREE:
     {
         DWord ref = *(DWord*)(sp - 2);
         free(ref.Ptr);
@@ -1403,13 +1407,13 @@ FREE:
     CONTINUE;
 #pragma endregion
 #pragma region Control flow
-JMP:
+HANDLE_JMP:
     {
         i16 o = iNextI16(&pc);
         pc += o;
     }
     CONTINUE;
-JMP_IF:
+HANDLE_JMP_IF:
     {
         i16 o = iNextI16(&pc);
         if((sp - 1)->Int)
@@ -1417,15 +1421,22 @@ JMP_IF:
         sp -= 1;
     }
     CONTINUE;
-CALL:
-/*
-    [ pc_low ] [ pc_high ] [ fp_low ] [ fp_high ] [ awc | swc ] 
-    [ local0 ] ... [ localN ] 
-    [ stack0 ] ... [ stackN ]
-*/
+HANDLE_CALL:
+    FunctionHeader *header;
     {
         u16 f = iNextU16(&pc);
-        FunctionHeader *header = &functionPool[f]->Header;
+        header = &functionPool[f]->Header;
+    }
+    goto CALL_HEADER;
+HANDLE_INDCALL:
+    header = (FunctionHeader*)((DWord*)(sp - 2))->Ptr;
+CALL_HEADER:
+/*
+    [ pc_low ] [ pc_high ] [ fp_low ] [ fp_high ] [ mt_low ] [ mt_high ] [ awc | swc ] 
+    [ local0 ] ... [ localN ] 
+    [ stack0 ] ... [ stackM ]
+*/
+    {        
         ModuleTable *newMT = header->MT;
         u16 awc         = header->AWC;
         u16 lwc         = header->LWC;
@@ -1455,7 +1466,7 @@ CALL:
         UNLIKELY(sp + swc >= context->StackTop, "Stack overflow!\n");
     }
     CONTINUE;
-SYSCALL:
+HANDLE_SYSCALL:
     {
         static const void *SyscallPointers[] =
         {
@@ -1607,7 +1618,7 @@ SYSCALL:
             CONTINUE;
         }
     }
-RET:
+HANDLE_RET:
     Byte *prevPC =        ((DWord*)(fp + PC_OFFSET))->BytePtr; 
     Word *prevFP =        ((DWord*)(fp + FP_OFFSET))->WordPtr;
     ModuleTable *prevMT = ((DWord*)(fp + MT_OFFSET))->Ptr;

@@ -24,6 +24,8 @@ i32 Validate(const String *functionSignature, const FunctionHeader *header, cons
         1, 1, // push const word
         2, 2, // push const dword
         2, 2, // push const string
+        2, 2, // push glob ref
+        2, // push func 
         // pop locals
         -1, -1, -1, -1, // pop byte
         -1, -1, // pop hword
@@ -92,7 +94,7 @@ i32 Validate(const String *functionSignature, const FunctionHeader *header, cons
         2, -2,
         // flow
         0, -1, // jump
-        INT32_MIN, INT32_MIN, // call
+        INT32_MIN, -2, INT32_MIN, // call
         INT32_MIN, // ret
     };
     static const i32 sInstructionsFixedParameterSizes[] = 
@@ -114,6 +116,8 @@ i32 Validate(const String *functionSignature, const FunctionHeader *header, cons
         1, 2, // push const word
         1, 2, // push const dword
         1, 2, // push const string
+        1, 2, // push glob ref
+        2, // push func 
         // pop locals
         1, 1, 1, 1, // pop byte
         1, 1, // pop hword
@@ -183,7 +187,7 @@ i32 Validate(const String *functionSignature, const FunctionHeader *header, cons
         0, 0,
         // flow
         0, 0, // jump
-        2, 1, // call
+        2, 0, 1, // call
         0, // ret
     };
     static const i32 sSysfnStackOffsets[] = 
@@ -327,7 +331,12 @@ i32 Validate(const String *functionSignature, const FunctionHeader *header, cons
                 }
             }
             break;
-
+        case OP_PUSH_GLOB_REF:
+        case OP_PUSH_GLOB_REF_W:
+        case OP_PUSH_FUNC:
+            DEVEL_ASSERT(false, "Not implemented [opcode=%u]\n", opcode);
+            return 1;
+            break;
         case OP_POP_WORDS:
             {
                 u8 l = instruction[1];
