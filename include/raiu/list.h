@@ -45,6 +45,12 @@ static inline void JOIN(LIST(T), Destroy)(LIST(T) *list)
         T_DTOR(list->Data + i); 
     free(list->Data); 
 }
+static inline void JOIN(LIST(T), Copy)(LIST(T) *this, const LIST(T) *other)
+{
+    this->Data = (T*) malloc(other->Count * sizeof(T));
+    this->Count    = other->Count;
+    this->Capacity = other->Count;
+}
 
 static inline T *JOIN(LIST(T), AtRW)(LIST(T) *list, u32 i) { return list->Data + i; }
 static inline const T *JOIN(LIST(T), AtRO)(const LIST(T) *list, u32 i) { return list->Data + i; }
@@ -75,15 +81,13 @@ static inline void JOIN(LIST(T), PushBack)(LIST(T) *list, T *ref)
     list->Count += 1;
 }
 
-
-
 #undef T
 #undef T_DTOR
 #undef T_CPY
 
 #undef LIST_T
 #undef LIST_T_DTOR
-#undef LIST_T_COPY
+#undef LIST_T_CPY
 #undef LIST
 #undef LIST_NAME
 

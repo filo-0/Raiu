@@ -295,6 +295,7 @@ i32 Execute(ProgramContext *context)
     Word            *wordPool;
     DWord           *dwordPool;
     ch8            **stringPool;
+    void           **globalPool;
     Function       **functionPool;
     u8               opcode;
     
@@ -305,6 +306,7 @@ i32 Execute(ProgramContext *context)
     wordPool     = context->EntryPoint->MT->WordPool;
     dwordPool    = context->EntryPoint->MT->DWordPool;
     stringPool   = context->EntryPoint->MT->StringPool;
+    globalPool   = context->EntryPoint->MT->GlobalPool;
     functionPool = context->EntryPoint->MT->FunctionPool;
     opcode       = pc->UInt;
     
@@ -744,9 +746,23 @@ HANDLE_PUSH_CONST_STR_W:
     }    
     CONTINUE;
 HANDLE_PUSH_GLOB_REF:
+    {
+        DWord d = RefToDWord(*(globalPool + iNextU8(&pc)));
+        VAL_PUSH_DWORD(sp, d);
+    }
+    CONTINUE;
 HANDLE_PUSH_GLOB_REF_W:
+    {
+        DWord d = RefToDWord(*(globalPool + iNextU16(&pc)));
+        VAL_PUSH_DWORD(sp, d);
+    }
+    CONTINUE;
 HANDLE_PUSH_FUNC:
-    goto HANDLE_NOT_IMPLEMENTED;
+    {
+        DWord funcPtr = RefToDWord(*(functionPool + iNextU16(&pc)));
+        VAL_PUSH_DWORD(sp, funcPtr);
+    }
+    CONTINUE;
 #pragma endregion
 #pragma region Pop
 HANDLE_POP_BYTE:
@@ -1128,6 +1144,7 @@ HANDLE_DUP_DWORD:
         *(DWord*)(sp + 0) = *(DWord*)(sp - 2);
         sp += 2;
     }  
+    CONTINUE;
 HANDLE_DUP_WORD_X1:
     {
         Word top = *(sp - 1);
@@ -1462,6 +1479,7 @@ CALL_HEADER:
         dwordPool    = newMT->DWordPool;
         functionPool = newMT->FunctionPool;
         stringPool   = newMT->StringPool;
+        globalPool   = newMT->GlobalPool;
 
         UNLIKELY(sp + swc >= context->StackTop, "Stack overflow!\n");
     }
@@ -1637,6 +1655,7 @@ HANDLE_RET:
     wordPool     = mt->WordPool;
     dwordPool    = mt->DWordPool;
     stringPool   = mt->StringPool;
+    globalPool   = mt->GlobalPool;
     functionPool = mt->FunctionPool;
 
     CONTINUE;

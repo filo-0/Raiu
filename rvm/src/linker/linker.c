@@ -8,20 +8,11 @@
 #include "raiu/raiu.h"
 #include "metadata.h"
 
-#define MAP_T sz
+#define MAP_T void*
 #define MAP_K String
 #define MAP_K_DTOR String_Destroy
 #define MAP_K_COPY String_Copy
-#define MAP_NAME GlobalsMap
-#define MAP_HASH String_Hash
-#define MAP_EQ String_Equal
-#include "raiu/map.h"
-
-#define MAP_T Function*
-#define MAP_K String
-#define MAP_K_DTOR String_Destroy
-#define MAP_K_COPY String_Copy
-#define MAP_NAME FunctionMap
+#define MAP_NAME Map_String_Ptr
 #define MAP_HASH String_Hash
 #define MAP_EQ String_Equal
 #include "raiu/map.h"
@@ -98,15 +89,15 @@ static const Byte *iGetStringPool(const Byte *ptr, const Byte *limitPtr, List_St
     }
     return ptr;
 }
-static const Byte *iGetFunctionSignatures(const Byte *ptr, const Byte *limitPtr, const String *pathSuffix, List_String *intFuncs, List_String *extFuncs) 
+static const Byte *iGetSignatures(const Byte *ptr, const Byte *limitPtr, const String *pathSuffix, List_String *intList, List_String *extList) 
 {
     if(ptr + 2 > limitPtr)
         return NULL;
 
-    u16 functionCount = iReadHWord(&ptr).UInt;
+    u16 totalCount = iReadHWord(&ptr).UInt;
     sz i = 0;
-    List_String_Reserve(intFuncs, functionCount);
-    while(i < functionCount)
+    List_String_Reserve(intList, totalCount);
+    while(i < totalCount)
     {        
         const char *sPtr = (char*) ptr;
         sz len = iSafeStrlen(sPtr, limitPtr);
@@ -117,7 +108,7 @@ static const Byte *iGetFunctionSignatures(const Byte *ptr, const Byte *limitPtr,
         String_Copy(&signature, pathSuffix);
         String_PushBack(&signature, '.');
         String_ConcatStr(&signature, sPtr);
-        List_String_PushBack(intFuncs, &signature);
+        List_String_PushBack(intList, &signature);
         ptr += len + 1;        
         i++;
 
@@ -128,8 +119,8 @@ static const Byte *iGetFunctionSignatures(const Byte *ptr, const Byte *limitPtr,
         }
     }
 
-    List_String_Reserve(extFuncs, functionCount - i);
-    while(i < functionCount)
+    List_String_Reserve(extList, totalCount - i);
+    while(i < totalCount)
     {
         const char *sPtr = (char*) ptr;
         sz len = iSafeStrlen(sPtr, limitPtr);
@@ -139,11 +130,24 @@ static const Byte *iGetFunctionSignatures(const Byte *ptr, const Byte *limitPtr,
         String signature;
         String_Init(&signature);
         String_ConcatStr(&signature, sPtr);
-        List_String_PushBack(extFuncs, &signature);
+        List_String_PushBack(extList, &signature);
         ptr += len + 1;
         i++;
     }
 
+    return ptr;
+}
+static const Byte *iGetGlobalSizes(const Byte *ptr, const Byte *limitPtr, sz globalCount, List_sz *globalSizes)
+{
+    List_sz_Reserve(globalSizes, globalCount);
+    for (size_t i = 0; i < globalCount; i++)
+    {
+        if(ptr + 4 > limitPtr)
+            return NULL;
+        sz size = (sz)*(u32*)ptr;
+        List_sz_PushBack(globalSizes, &size);
+        ptr += 4;
+    }
     return ptr;
 }
 static const Byte *iGetFunctionDefinitions(const Byte *ptr, const Byte *limitPtr, sz functionCount, FunctionList *functionDefinitions)
@@ -216,7 +220,21 @@ static i32 iUpdateLinkData(LinkData *linkData, const String *filepath)
         goto RET;
     }
 
-    ptr = iGetFunctionSignatures(ptr, bufferLimit, filepath, &moduleData.InternalFunctions, &moduleData.ExternalFunctions);
+    ptr = iGetSignatures(ptr, bufferLimit, filepath, &moduleData.InternalGlobals, &moduleData.ExternalGlobals);
+    if(!ptr)
+    {
+        error = LINKING_ERROR_INCOHERENT_FILE;
+        goto RET;
+    }
+
+    ptr = iGetSignatures(ptr, bufferLimit, filepath, &moduleData.InternalFunctions, &moduleData.ExternalFunctions);
+    if(!ptr)
+    {
+        error = LINKING_ERROR_INCOHERENT_FILE;
+        goto RET;
+    }
+
+    ptr = iGetGlobalSizes(ptr, bufferLimit, moduleData.InternalGlobals.Count, &moduleData.GlobalSizes);
     if(!ptr)
     {
         error = LINKING_ERROR_INCOHERENT_FILE;
@@ -281,7 +299,15 @@ static i32 iGetLinkData(LinkData *linkData, const String *dirpath)
     closedir(directory);
     return 0;
 }
-
+static sz iGetAlignement(sz size)
+{
+    sz alignement;
+    if      (size > 4) alignement = 8;
+    else if (size > 2) alignement = 4;
+    else if (size > 1) alignement = 2;
+    else /* size==1 */ alignement = 1;
+    return alignement;
+}
 static i32  iAllocateContextBuffers(ProgramContext *context, const LinkData *linkData)
 {
     #define DEFAULT_STACK_SIZE (1 << 22)
@@ -306,11 +332,8 @@ static i32  iAllocateContextBuffers(ProgramContext *context, const LinkData *lin
         for (u32 j = 0; j < moduleData->GlobalSizes.Count; j++)
         {
             sz globalSize = *List_sz_AtRO(&moduleData->GlobalSizes, j);
-            sz alignement;
-            if     (globalSize > 4) alignement = 8;
-            else if(globalSize > 2) alignement = 4;
-            else if(globalSize > 1) alignement = 2;
-            else                    alignement = 1;
+            sz alignement = iGetAlignement(globalSize);
+            
             globalsBufferSize += globalsBufferSize % alignement ? alignement - (globalsBufferSize % alignement): 0; // align to alignement
             globalsBufferSize += globalSize;
         }   
@@ -349,66 +372,79 @@ static i32  iAllocateContextBuffers(ProgramContext *context, const LinkData *lin
     }
     return 0;
 }
-static void iSetWordAndDWordBuffers(ProgramContext *context, const LinkData *linkData)
+static void iFillBuffers(ProgramContext *context, Map_String_Ptr *functionMap, Map_String_Ptr *globalMap, const LinkData *linkData)
 {
-    sz wordIterator = 0;
-    sz dwordIterator = 0;
+    Word  *wordPtr     = context->WordsBuffer;
+    DWord *dwordPtr    = context->DWordsBuffer;
+    Byte  *stringPtr   = context->StringsBuffer;
+    Byte  *globalPtr   = context->GlobalsBuffer;
+    Byte  *functionPtr = context->FunctionsBuffer;
 
     for (u32 i = 0; i < linkData->Count; i++)
     {
         const ModuleData *moduleData = LinkData_AtRO(linkData, i);
-        ModuleTable *moduleTable = context->ModuleTablesBuffer + i;
 
-        moduleTable->WordPool     = context->WordsBuffer + wordIterator;
-        moduleTable->WordPoolSize = moduleData->Words.Count;
-        memcpy(moduleTable->WordPool, moduleData->Words.Data, moduleData->Words.Count * sizeof(Word));
-        wordIterator += moduleData->Words.Count;
+        memcpy(wordPtr, moduleData->Words.Data, moduleData->Words.Count * sizeof(Word));
+        wordPtr += moduleData->Words.Count;
 
-        moduleTable->DWordPool     = context->DWordsBuffer + dwordIterator;
-        moduleTable->DWordPoolSize = moduleData->DWords.Count;
-        memcpy(moduleTable->DWordPool, moduleData->DWords.Data, moduleData->DWords.Count * sizeof(DWord));
-        dwordIterator += moduleData->DWords.Count;
-    }
-}
-static void iSetFunctionAndStringBuffer(ProgramContext *context, FunctionMap *functionMap, const LinkData *linkData)
-{
-    sz functionIterator = 0;
-    sz stringIterator   = 0;
-    for (u32 i = 0; i < linkData->Count; i++)
-    {
-        const ModuleData *moduleData = LinkData_AtRO(linkData, i);
-        
-        for (u32 j = 0; j < moduleData->FunctionDefinitions.Count; j++)
-        {
-            const String *functionSignature  = List_String_AtRO(&moduleData->InternalFunctions, j);
-            const FunctionData *functionData = FunctionList_AtRO(&moduleData->FunctionDefinitions, j);
-            Function *functionLoc = (Function*) (context->FunctionsBuffer + functionIterator);
-            functionLoc->Header.MT = NULL;
-            memcpy((Byte*)functionLoc + 8, functionData->Func, functionData->Size);
-
-            FunctionMap_PutCopy(functionMap, functionSignature, &functionLoc);
-            functionIterator += functionData->Size + 8;
-            if(functionIterator % 8) // allign
-                functionIterator += 8 - (functionIterator % 8);
-        }
+        memcpy(dwordPtr, moduleData->DWords.Data, moduleData->DWords.Count * sizeof(DWord));
+        dwordPtr += moduleData->DWords.Count;
 
         for (u32 j = 0; j < moduleData->Strings.Count; j++)
         {
             const String *string = List_String_AtRO(&moduleData->Strings, j);
-            char *stringLocation = (char*)context->StringsBuffer + stringIterator; 
+            char *stringLocation = (char*)stringPtr; 
             memcpy(stringLocation, String_CStr(string), string->Length);
             stringLocation[string->Length] = 0;   
-            stringIterator += string->Length + 1;
+            stringPtr += string->Length + 1;
+        }
+
+        for (u32 j = 0; j < moduleData->GlobalSizes.Count; j++)
+        {
+            const String *globalSignature =  List_String_AtRO(&moduleData->InternalGlobals, j);
+            sz            globalSize      = *List_sz_AtRO(&moduleData->GlobalSizes, j);
+            sz alignement = iGetAlignement(globalSize);
+            if((sz)globalPtr % alignement)
+                globalPtr += alignement - ((sz)globalPtr % alignement); // align
+            Map_String_Ptr_PutCopy(globalMap, globalSignature, (void**)&globalPtr);
+            globalPtr += globalSize;
+        }
+        
+
+        for (u32 j = 0; j < moduleData->FunctionDefinitions.Count; j++)
+        {
+            const String *functionSignature  = List_String_AtRO(&moduleData->InternalFunctions, j);
+            const FunctionData *functionData = FunctionList_AtRO(&moduleData->FunctionDefinitions, j);
+            Function *functionLoc = (Function*) functionPtr;
+            functionLoc->Header.MT = NULL;
+            memcpy((Byte*)functionLoc + 8, functionData->Func, functionData->Size);
+
+            Map_String_Ptr_PutCopy(functionMap, functionSignature, (void**)&functionLoc);
+            functionPtr += functionData->Size + 8;
+            if((sz)functionPtr % 8) // allign
+                functionPtr += 8 - ((sz)functionPtr % 8);
         }
     }
 }
-static i32 iSetFunctionAndStringPool(ProgramContext *context, const FunctionMap *functionMap, const LinkData *linkData)
+static i32  iSetPools(ProgramContext *context, const Map_String_Ptr *functionMap, const Map_String_Ptr *globalMap, const LinkData *linkData)
 {
+    sz wordIterator  = 0;
+    sz dwordIterator = 0;
     for (u32 i = 0; i < linkData->Count; i++)
     {
         const ModuleData *moduleData = LinkData_AtRO(linkData, i);
         ModuleTable *moduleTable = context->ModuleTablesBuffer + i;
 
+        // word and dword pools are direct buffers
+        moduleTable->WordPool     = context->WordsBuffer + wordIterator;
+        moduleTable->WordPoolSize = moduleData->Words.Count;
+        wordIterator += moduleData->Words.Count;
+
+        moduleTable->DWordPool     = context->DWordsBuffer + dwordIterator;
+        moduleTable->DWordPoolSize = moduleData->DWords.Count;
+        dwordIterator += moduleData->DWords.Count;
+
+        // string, global and function pools are indirect buffers
         moduleTable->StringPoolSize = moduleData->Strings.Count;
         moduleTable->StringPool     = moduleTable->StringPoolSize ? calloc(moduleTable->StringPoolSize, sizeof(char*)) : NULL;
         char *s = (char*)context->StringsBuffer;
@@ -418,21 +454,35 @@ static i32 iSetFunctionAndStringPool(ProgramContext *context, const FunctionMap 
             s += strlen(s) + 1;
         }
 
+        moduleTable->GlobalPoolSize = moduleData->InternalGlobals.Count + moduleData->ExternalGlobals.Count;
+        moduleTable->GlobalPool = moduleTable->GlobalPoolSize ? calloc(moduleTable->GlobalPoolSize, sizeof(void*)) : NULL;
+        for (u32 i = 0; i < moduleTable->GlobalPoolSize; i++)
+        {
+            const String *globSignature = List_String_AtRO(i < moduleData->InternalGlobals.Count ? &moduleData->InternalGlobals : &moduleData->ExternalGlobals, i);
+            void *const *globalLoc = Map_String_Ptr_AtRO(globalMap, globSignature);
+            if(!globalLoc)
+            {
+                DEVEL_ASSERT(false, "Linker : Cannot find global %s", String_CStr(globSignature));
+                return 1;
+            }
+            moduleTable->GlobalPool[i] = *globalLoc;
+        }
+
         moduleTable->FunctionPoolSize = moduleData->InternalFunctions.Count + moduleData->ExternalFunctions.Count;
-        moduleTable->FunctionPool = moduleTable->FunctionPoolSize ? calloc(moduleTable->FunctionPoolSize, sizeof(Function*)) : NULL;
+        moduleTable->FunctionPool = moduleTable->FunctionPoolSize ? calloc(moduleTable->FunctionPoolSize, sizeof(void*)) : NULL;
         for (u32 i = 0; i < moduleData->InternalFunctions.Count; i++)
         {
             const String *funcSignature = List_String_AtRO(&moduleData->InternalFunctions, i);
-            moduleTable->FunctionPool[i] = *FunctionMap_AtRO(functionMap, funcSignature);
+            moduleTable->FunctionPool[i] = *Map_String_Ptr_AtRO(functionMap, funcSignature);
             moduleTable->FunctionPool[i]->Header.MT = moduleTable;
         }
         for (u32 i = 0; i < moduleData->ExternalFunctions.Count; i++)
         {
             const String *funcSignature = List_String_AtRO(&moduleData->ExternalFunctions, i);
-            Function *const *funcLoc = FunctionMap_AtRO(functionMap, funcSignature);
+            Function *const *funcLoc = (Function**) Map_String_Ptr_AtRO(functionMap, funcSignature);
             if(funcLoc == NULL)
             {
-                LOG_ERROR("Linker : Cannot find function %s", String_CStr(funcSignature));
+                DEVEL_ASSERT(false, "Linker : Cannot find function %s", String_CStr(funcSignature));
                 return LINKING_ERROR_FUNCTION_NOT_FOUND;
             }
             moduleTable->FunctionPool[i + moduleData->InternalFunctions.Count] = *funcLoc;
@@ -440,13 +490,13 @@ static i32 iSetFunctionAndStringPool(ProgramContext *context, const FunctionMap 
     }
     return 0;
 }
-i32 iSetEntryPoint(ProgramContext *context, const FunctionMap *functionMap, const String *rootpath)
+static i32  iSetEntryPoint(ProgramContext *context, const Map_String_Ptr *functionMap, const String *rootpath)
 {
     String mainSignature;
     String_Copy     (&mainSignature, rootpath   );
     String_ConcatStr(&mainSignature, "/Main.Main");
 
-    Function *const *mainLocation = FunctionMap_AtRO(functionMap, &mainSignature);
+    Function *const *mainLocation = (Function**) Map_String_Ptr_AtRO(functionMap, &mainSignature);
     if(!mainLocation)
     {
         String_Destroy(&mainSignature);
@@ -459,24 +509,15 @@ i32 iSetEntryPoint(ProgramContext *context, const FunctionMap *functionMap, cons
     return 0;
 }
 
-// TODO: make this code mode clear
-void ValidateFunction(String *functionName, Function **function, void *valid)
-{
-    if(*(bool*)valid)
-    {
-        int validationError = Validate(functionName ,&(*function)->Header, (*function)->Body, 0);    
-        if(validationError)
-            *(bool*)valid = false; 
-    }
-}
 i32 Link(ProgramContext *context, const String *rootpath)
 {
     i32 error = 0;    
     LinkData linkData;
-    FunctionMap functionMap;
+    Map_String_Ptr functionMap;
+    Map_String_Ptr globalMap;
     LinkData_Create(&linkData);
-    FunctionMap_Create(&functionMap);
-
+    Map_String_Ptr_Create(&functionMap);
+    Map_String_Ptr_Create(&globalMap);
 
     i32 getError = iGetLinkData(&linkData, rootpath);
     if(getError)
@@ -493,10 +534,9 @@ i32 Link(ProgramContext *context, const String *rootpath)
         goto RET;
     }
 
-    iSetWordAndDWordBuffers(context, &linkData);
+    iFillBuffers(context, &functionMap, &globalMap, &linkData);
 
-    iSetFunctionAndStringBuffer(context, &functionMap, &linkData);
-    i32 functionNotFound = iSetFunctionAndStringPool(context, &functionMap, &linkData);
+    i32 functionNotFound = iSetPools(context, &functionMap, &globalMap, &linkData);
     if(functionNotFound)
     {
         error = functionNotFound;
@@ -510,17 +550,11 @@ i32 Link(ProgramContext *context, const String *rootpath)
     
     
     bool valid = true;
-    // FunctionMap_ForEach(&functionMap, ValidateFunction, &valid);
-    // if(!valid)
-    // {
-    //     error = 1;
-    //     goto RET;
-    // }
-
-    foreach(FunctionMap, functionMap)
+    foreach(Map_String_Ptr, functionMap)
     {
-        const FunctionMap_Pair *p = FunctionMap_Iterator_AccessRO(&i);
-        int validationError = Validate(&p->Key ,&p->Val->Header, p->Val->Body, 0);    
+        const Map_String_Ptr_Pair *p = Map_String_Ptr_Iterator_AccessRO(&i);
+        Function *f = (Function*)p->Val;
+        int validationError = Validate(&p->Key ,&f->Header, f->Body, 0);    
         if(validationError)
         {
             valid = false; 
@@ -534,7 +568,8 @@ i32 Link(ProgramContext *context, const String *rootpath)
     }
     
 RET:
-    FunctionMap_Destroy(&functionMap);
+    Map_String_Ptr_Destroy(&functionMap);
+    Map_String_Ptr_Destroy(&globalMap);
     LinkData_Destroy(&linkData);
     return error;
 }

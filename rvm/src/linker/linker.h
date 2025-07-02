@@ -30,6 +30,9 @@ static inline void FunctionData_Destroy(FunctionData *data) { free(data->Func); 
 #define LIST_T sz
 #include "raiu/list.h"
 
+/**
+ * A link time struct that holds the data of a module to link
+ */
 typedef struct _ModuleData
 {
     // all buffers must be freed
@@ -43,6 +46,7 @@ typedef struct _ModuleData
     List_String ExternalGlobals;
     List_sz     GlobalSizes;
 } ModuleData;
+
 static inline void ModuleData_Create(ModuleData *data)
 { 
     List_Word_Create(&data->Words);
@@ -73,4 +77,30 @@ static inline void ModuleData_Destroy(ModuleData *data)
 #define LIST_NAME LinkData
 #include "raiu/list.h"
 
+/**
+ * @brief Checks if a function is valid, the requirements for a function to be valid are:
+ * 
+ * - The AWC is less than the LWC
+ * 
+ * - The stack pointer never exceeds the bounds [0, SWC]
+ * 
+ * - The instructions are valid opcodes
+ * 
+ * - The system calls are valid opcodes
+ * 
+ * - The local scope is accessed inside its limits [0, LWC]
+ * 
+ * - The pools are accessed inside their limits
+ * 
+ * The parameters instruction and sp are used when the function has branching logic, and all the path must be validated.
+ *  
+ * @attention The only case where the validity of a function is trusted 
+ * is when the function uses the IND_CALL opcode (call through a function pointer)
+ * 
+ * @param functionSignature Currently is not possible to access the function signature throught the function header, this parameter will be removed.
+ * @param header The function header 
+ * @param instruction The instruction to start from, by default should be the first instruction
+ * @param sp The current stack pointer, by default should be 0
+ * @return 0 if the function is valid, 1 otherwise
+ */
 i32 Validate(const String *functionSignature, const FunctionHeader *header, const u8 *instruction, i32 sp);

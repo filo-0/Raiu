@@ -94,7 +94,7 @@ i32 Validate(const String *functionSignature, const FunctionHeader *header, cons
         2, -2,
         // flow
         0, -1, // jump
-        INT32_MIN, -2, INT32_MIN, // call
+        INT32_MIN, INT32_MIN, INT32_MIN, // call
         INT32_MIN, // ret
     };
     static const i32 sInstructionsFixedParameterSizes[] = 
@@ -230,9 +230,7 @@ i32 Validate(const String *functionSignature, const FunctionHeader *header, cons
         }
     
         i32 stackOffset = instrStackOffsets[opcode];
-        i32 paramOffset = instrParamOffsets[opcode];
-
-        
+        i32 paramOffset = instrParamOffsets[opcode]; 
         
         switch (opcode)
         {
@@ -332,10 +330,34 @@ i32 Validate(const String *functionSignature, const FunctionHeader *header, cons
             }
             break;
         case OP_PUSH_GLOB_REF:
+            {
+                u8 c = instruction[1];
+                if(c >= header->MT->GlobalPoolSize)
+                {
+                    DEVEL_ASSERT(false, "Invalid global data access in function %s [MAX=%u,c=%u]\n", String_CStr(functionSignature), header->MT->StringPoolSize, c);
+                    return 1;
+                }
+            }
+            break;
         case OP_PUSH_GLOB_REF_W:
+            {
+                u16 c = *(u16*)(instruction + 1);
+                if(c >= header->MT->GlobalPoolSize)
+                {
+                    DEVEL_ASSERT(false, "Invalid global data access in function %s [MAX=%u,c=%u]\n", String_CStr(functionSignature), header->MT->StringPoolSize, c);
+                    return 1;
+                }
+            }
+            break;
         case OP_PUSH_FUNC:
-            DEVEL_ASSERT(false, "Not implemented [opcode=%u]\n", opcode);
-            return 1;
+            {
+                u16 c = *(u16*)(instruction + 1);
+                if(c >= header->MT->FunctionPoolSize)
+                {
+                    DEVEL_ASSERT(false, "Invalid function pointer access in function %s [MAX=%u,c=%u]\n", String_CStr(functionSignature), header->MT->StringPoolSize, c);
+                    return 1;
+                }
+            }
             break;
         case OP_POP_WORDS:
             {
@@ -410,6 +432,11 @@ i32 Validate(const String *functionSignature, const FunctionHeader *header, cons
                 Function *function = header->MT->FunctionPool[f];            
                 stackOffset = function->Header.RWC - function->Header.AWC;
             }
+            break;
+        case OP_INDCALL:
+            // cannot verify validity, validity is trusted
+            stackOffset = 0;
+            exited = true;
             break;
         case OP_SYSCALL:
             {

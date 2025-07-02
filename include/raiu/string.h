@@ -5,6 +5,7 @@
 #include <stdbool.h>
 
 #include "types.h"
+#include "assert.h"
 
 #define SMALL_STRING_LEN 23
 
@@ -80,7 +81,18 @@ static inline void String_Clear(String *this)
     }
     this->Length = 0;
 }
-static inline char *String_At(String *this, sz i) 
+static inline char *String_AtRW(String *this, sz i) 
+{
+    if(this->Length <= SMALL_STRING_LEN)
+    {
+        return this->Data.Stack + i;
+    }
+    else
+    {
+        return this->Data.Heap.Data + i;
+    }
+}
+static inline const char *String_AtRO(const String *this, sz i) 
 {
     if(this->Length <= SMALL_STRING_LEN)
     {
@@ -158,6 +170,38 @@ static inline void String_ConcatStr(String *this, const char *other)
     memcpy(thisBuffer + this->Length, other, otherLen * sizeof(char));
     thisBuffer[newLength] = 0;
     this->Length += otherLen;
+}
+static inline void String_Substring(String *sub, const String *this, sz i, sz j)
+{
+    DEVEL_ASSERT(i >= j, "Invalid substring indices [%zu, %zu]", i, j);
+    if(j - i <= SMALL_STRING_LEN)
+    {
+        memcpy(sub->Data.Stack, String_AtRO(this, i), j - i);
+        sub->Data.Stack[j - i] = 0;
+    }
+    else
+    {
+        sub->Data.Heap.Data = malloc(j - i + 1);
+        memcpy(sub->Data.Heap.Data, String_AtRO(this, i), j - i);
+        sub->Data.Heap.Data[j - i] = 0;
+    }
+    sub->Length = j - i;
+}
+static inline void String_Substr(String *sub, const char *str, sz i, sz j)
+{
+    DEVEL_ASSERT(i >= j, "Invalid substring indices [%zu, %zu]", i, j);
+    if(j - i <= SMALL_STRING_LEN)
+    {
+        memcpy(sub->Data.Stack, str + i, j - i);
+        sub->Data.Stack[j - i] = 0;
+    }
+    else
+    {
+        sub->Data.Heap.Data = malloc(j - i + 1);
+        memcpy(sub->Data.Heap.Data, str + i, j - i);
+        sub->Data.Heap.Data[j - i] = 0;
+    }
+    sub->Length = j - i;
 }
 
 static inline bool String_Equal(const String *this, const String *other) { return strcmp(String_CStr(this), String_CStr(other)) == 0; }

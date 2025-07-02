@@ -184,6 +184,17 @@ static inline void JOIN(MAP(K, T), Put)(MAP(K, T) *map, K *key, T *val)
         JOIN(MAP(K, T), Reserve)(map, map->BucketCapacity ? map->BucketCapacity * 2 : 1);
     
     u32 bucketID = H(key) % map->BucketCapacity;
+    MBUCK(K, T) *bucket = map->BucketBuffer + bucketID;
+    for (u32 i = 0; i < bucket->Count; i++)
+    {
+        if(!EQ(&bucket->Data[i].Key, key))
+            continue;
+        MPAIR(K, T) *p = bucket->Data + i;
+        p->Val = *val;
+        return;
+    }
+
+    // not found
     MPAIR(K, T) pair = { *key, *val };
     JOIN(MBUCK(K, T), Add)(map->BucketBuffer + bucketID, &pair);
     map->Count += 1;
@@ -194,6 +205,17 @@ static inline void JOIN(MAP(K, T), PutCopy)(MAP(K, T) *map, K const *key, T cons
         JOIN(MAP(K, T), Reserve)(map, map->BucketCapacity ? map->BucketCapacity * 2 : 1);
     
     u32 bucketID = H(key) % map->BucketCapacity;
+    MBUCK(K, T) *bucket = map->BucketBuffer + bucketID;
+    for (u32 i = 0; i < bucket->Count; i++)
+    {
+        if(!EQ(&bucket->Data[i].Key, key))
+            continue;
+        MPAIR(K, T) *p = bucket->Data + i;
+        T_COPY(&p->Val, val);
+        return;
+    }
+
+    // not found
     MPAIR(K, T) pair;
     K_COPY(&pair.Key, key);
     T_COPY(&pair.Val, val);
@@ -229,12 +251,25 @@ static inline void JOIN(MITER(K, T), Inc)(MITER(K, T) *i)
 static inline MPAIR(K, T) const *JOIN(MITER(K, T), AccessRO)(MITER(K, T) *i) { return i->Bucket->Data + i->PairIndex; }
 static inline MPAIR(K, T)       *JOIN(MITER(K, T), AccessRW)(MITER(K, T) *i) { return i->Bucket->Data + i->PairIndex; }
 
+static inline void JOIN(MAP(K, T), CreateFromList)(MAP(K, T) *map, const MPAIR(K, T) *list, u32 count)
+{
+    JOIN(MAP(K, T), Create)(map);
+    JOIN(MAP(K, T), Reserve)(map, count);
+    for (u32 i = 0; i < count; i++)
+    {
+        const MPAIR(K, T) *p = list + i;
+        JOIN(MAP(K, T), PutCopy)(map, &p->Key, &p->Val);
+    }
+}
+
 #define foreach(MAP_TYPE, MAP) for(MAP_TYPE##_Iterator i = MAP_TYPE##_Iterator##_Begin(&(MAP)); !MAP_TYPE##_Iterator##_End(&i, &(MAP)); MAP_TYPE##_Iterator##_Inc(&i))
 
 #undef T
 #undef K
 #undef H
 #undef EQ
+#undef T_DTOR
+#undef K_DTOR
 
 #undef MAP_T
 #undef MAP_K

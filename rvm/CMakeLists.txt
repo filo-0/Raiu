@@ -1,9 +1,12 @@
 set(RVM rvm)
 
 if(NOT CMAKE_C_COMPILER_ID STREQUAL "GNU")
-    message(FATAL_ERROR "Compiler not supported : ${CMAKE_C_COMPILER}")
+    message(FATAL_ERROR "Compiler not supported : ${CMAKE_C_COMPILER} the Raiu Virtual Machine only supports the GNU GCC compiler!")
 endif()
-message("Using compiler ${CMAKE_C_COMPILER}")
+
+if(NOT CMAKE_SIZEOF_VOID_P EQUAL 8)
+    message(FATAL_ERROR "The Raiu Virtual Machine only supports 64-bit architectures!")
+endif()
 
 file(GLOB_RECURSE SOURCES "src/*.c")
 add_executable(${RVM} ${SOURCES})

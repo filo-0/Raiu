@@ -1,6 +1,6 @@
 #pragma once
 
-#define OP_EXIT 0
+#define OP_BREAK 0
 
 #define OP_PUSH_BYTE_0  (u8) 0x01
 #define OP_PUSH_BYTE_1  (u8) 0x02
