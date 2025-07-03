@@ -2,6 +2,7 @@
 
 #include <stdint.h>
 #include <stddef.h>
+#include <assert.h>
 
 typedef void *ref;
 typedef size_t sz;
@@ -54,6 +55,18 @@ typedef union _DWord
     union _Word  *WordPtr;
     union _DWord *DWordPtr;
 } DWord;
+
+#define SIZEOF_BYTE 1
+#define SIZEOF_HWORD 2
+#define SIZEOF_WORD 4
+#define SIZEOF_DWORD 8
+#define SIZEOF_PTR 8
+
+static_assert(SIZEOF_BYTE == sizeof(Byte), "Byte size is not 1!");
+static_assert(SIZEOF_HWORD == sizeof(HWord), "HWord size is not 2!");
+static_assert(SIZEOF_WORD == sizeof(Word), "Word size is not 4!");
+static_assert(SIZEOF_DWORD == sizeof(DWord), "DWord size is not 8!");
+static_assert(SIZEOF_PTR == sizeof(void*), "Architecture must be 64-bit!");
 
 inline static DWord DereferenceUnallignedDWord(const Word *p) { return *((DWord*)p); }
 inline static void AssignUnallignedDWord(Word *dest, const Word *src) { *((DWord*)dest) = *((DWord*)src); }

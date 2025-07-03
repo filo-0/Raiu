@@ -41,6 +41,8 @@ static i32 iCreateDummyProject(const char *root)
             { 0 }, { 0 },
             { OP_PUSH_FUNC }, { 1 }, { 0 },
             { OP_INDCALL },
+            { OP_PUSH_FUNC }, { 1 }, { 0 },
+            { OP_INDCALL },
             { OP_PUSH_CONST_STR }, { 1 },
             { OP_SYSCALL }, { OP_SYS_PRINT },
             { OP_PUSH_0_WORD },
@@ -69,9 +71,9 @@ static i32 iCreateDummyProject(const char *root)
         for(u16 i = 0; i < FUNCTION_POOL_SIZE + 1; i++)
             fwrite(FUNCTION_POOL[i], strlen(FUNCTION_POOL[i]) + 1, 1, mainFile);
 
-        const u32 MAIN_BODY_SIZE = sizeof(MAIN_BODY);
+        const u32 MAIN_BODY_SIZE = sizeof(MAIN_BODY) - 8;
         fwrite(&MAIN_BODY_SIZE, 4, 1, mainFile);
-        fwrite(&MAIN_BODY, MAIN_BODY_SIZE, 1, mainFile);
+        fwrite(&MAIN_BODY, MAIN_BODY_SIZE + 8, 1, mainFile);
 
         fclose(mainFile);
     }
@@ -132,9 +134,9 @@ static i32 iCreateDummyProject(const char *root)
         
         fwrite(GLOBAL_SIZES, 4, 1, subFile);
 
-        const u32 PRINTINT_BODY_SIZE = sizeof(PRINTINT_BODY);
+        const u32 PRINTINT_BODY_SIZE = sizeof(PRINTINT_BODY) - 8;
         fwrite(&PRINTINT_BODY_SIZE, sizeof(u32), 1, subFile);
-        fwrite(&PRINTINT_BODY, PRINTINT_BODY_SIZE, 1, subFile);
+        fwrite(&PRINTINT_BODY, PRINTINT_BODY_SIZE + 8, 1, subFile);
 
 
         fclose(subFile);

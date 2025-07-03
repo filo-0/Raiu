@@ -30,9 +30,9 @@ static sz iSafeStrlen(const char* s, const void *limit)
     }
     return i;
 }
-static inline HWord iReadHWord(const Byte **p) { HWord h = *(HWord*)*p; *p += 2; return h; }
-static inline Word  iReadWord(const Byte  **p) { Word  w = *(Word*) *p; *p += 4; return w; }
-static inline DWord iReadDWord(const Byte **p) { DWord d = *(DWord*)*p; *p += 8; return d; }
+static inline HWord iReadHWord(const Byte **p) { HWord h = *(HWord*)*p; *p += SIZEOF_HWORD; return h; }
+static inline Word  iReadWord(const Byte  **p) { Word  w = *(Word*) *p; *p += SIZEOF_WORD; return w; }
+static inline DWord iReadDWord(const Byte **p) { DWord d = *(DWord*)*p; *p += SIZEOF_DWORD; return d; }
 
 static const Byte *iGetWordPool(const Byte *ptr, const Byte *limitPtr, List_Word *wordList)
 {
@@ -158,10 +158,16 @@ static const Byte *iGetFunctionDefinitions(const Byte *ptr, const Byte *limitPtr
             return NULL;
         u32 bytes = iReadWord(&ptr).UInt;
 
-        if(ptr + bytes > limitPtr)
+        if(ptr + bytes + 8 > limitPtr)
             return NULL;
-        FunctionData func = { (u8*) malloc(bytes), bytes };
-        memcpy(func.Func, ptr, bytes);
+        
+        u16 awc = iReadHWord(&ptr).UInt;
+        u16 lwc = iReadHWord(&ptr).UInt;
+        u16 swc = iReadHWord(&ptr).UInt;
+        u16 rwc = iReadHWord(&ptr).UInt;
+
+        FunctionData func = { awc, lwc, swc, rwc, (u8*) malloc(bytes), bytes };
+        memcpy(func.Body, ptr, bytes);
 
         FunctionList_PushBack(functionDefinitions, &func);       
 
@@ -200,6 +206,7 @@ static i32 iUpdateLinkData(LinkData *linkData, const String *filepath)
     const Byte *bufferLimit = buffer + fileSize;
 
     ptr = iGetWordPool(ptr, bufferLimit, &moduleData.Words);
+    DEVEL_ASSERT(ptr, "Error reading word pool!");
     if(!ptr)
     {
         error = LINKING_ERROR_INCOHERENT_FILE;
@@ -207,6 +214,7 @@ static i32 iUpdateLinkData(LinkData *linkData, const String *filepath)
     }
 
     ptr = iGetDWordPool(ptr, bufferLimit, &moduleData.DWords);
+    DEVEL_ASSERT(ptr, "Error reading dword pool!");
     if(!ptr)
     {
         error = LINKING_ERROR_INCOHERENT_FILE;
@@ -214,6 +222,7 @@ static i32 iUpdateLinkData(LinkData *linkData, const String *filepath)
     }
     
     ptr = iGetStringPool(ptr, bufferLimit, &moduleData.Strings);
+    DEVEL_ASSERT(ptr, "Error reading string pool!");
     if(!ptr)
     {
         error = LINKING_ERROR_INCOHERENT_FILE;
@@ -221,6 +230,7 @@ static i32 iUpdateLinkData(LinkData *linkData, const String *filepath)
     }
 
     ptr = iGetSignatures(ptr, bufferLimit, filepath, &moduleData.InternalGlobals, &moduleData.ExternalGlobals);
+    DEVEL_ASSERT(ptr, "Error reading global signatures!");
     if(!ptr)
     {
         error = LINKING_ERROR_INCOHERENT_FILE;
@@ -228,6 +238,7 @@ static i32 iUpdateLinkData(LinkData *linkData, const String *filepath)
     }
 
     ptr = iGetSignatures(ptr, bufferLimit, filepath, &moduleData.InternalFunctions, &moduleData.ExternalFunctions);
+    DEVEL_ASSERT(ptr, "Error reading function signatures!");
     if(!ptr)
     {
         error = LINKING_ERROR_INCOHERENT_FILE;
@@ -235,6 +246,7 @@ static i32 iUpdateLinkData(LinkData *linkData, const String *filepath)
     }
 
     ptr = iGetGlobalSizes(ptr, bufferLimit, moduleData.InternalGlobals.Count, &moduleData.GlobalSizes);
+    DEVEL_ASSERT(ptr, "Error reading global sizes!");
     if(!ptr)
     {
         error = LINKING_ERROR_INCOHERENT_FILE;
@@ -242,9 +254,11 @@ static i32 iUpdateLinkData(LinkData *linkData, const String *filepath)
     }
 
     ptr = iGetFunctionDefinitions(ptr, bufferLimit, moduleData.InternalFunctions.Count, &moduleData.FunctionDefinitions);
+    DEVEL_ASSERT(ptr && ptr == bufferLimit, "Error reading function definitions!");
     if(!ptr)
         error = LINKING_ERROR_INCOHERENT_FILE;
 
+    
     if(ptr != bufferLimit)
         error = LINKING_ERROR_INCOHERENT_FILE;
 RET:
@@ -252,12 +266,6 @@ RET:
     LinkData_PushBack(linkData, &moduleData);
     fclose(file);
     
-    switch (error)
-    {
-    case LINKING_ERROR_INCOHERENT_FILE:
-        LOG_ERROR("Linker : Incoherent file");
-        break;
-    }
     return error;
 }
 static i32 iGetLinkData(LinkData *linkData, const String *dirpath)
@@ -302,10 +310,10 @@ static i32 iGetLinkData(LinkData *linkData, const String *dirpath)
 static sz iGetAlignement(sz size)
 {
     sz alignement;
-    if      (size > 4) alignement = 8;
-    else if (size > 2) alignement = 4;
-    else if (size > 1) alignement = 2;
-    else /* size==1 */ alignement = 1;
+    if      (size > 4) alignement = SIZEOF_DWORD;
+    else if (size > 2) alignement = SIZEOF_WORD;
+    else if (size > 1) alignement = SIZEOF_HWORD;
+    else /* size==1 */ alignement = SIZEOF_BYTE;
     return alignement;
 }
 static i32  iAllocateContextBuffers(ProgramContext *context, const LinkData *linkData)
@@ -326,8 +334,8 @@ static i32  iAllocateContextBuffers(ProgramContext *context, const LinkData *lin
             stringBufferSize += List_String_AtRO(&moduleData->Strings, j)->Length + 1;
         for (u32 j = 0; j < moduleData->FunctionDefinitions.Count; j++)
         {
-            functionBufferSize += functionBufferSize % 8 ? 8 - (context->FunctionsBufferSize % 8) : 0; // allign to 8 bytes
-            functionBufferSize += FunctionList_AtRO(&moduleData->FunctionDefinitions, j)->Size + 8; // 8 bytes for module table pointer
+            functionBufferSize += functionBufferSize % SIZEOF_DWORD ? SIZEOF_DWORD - (context->FunctionsBufferSize % SIZEOF_DWORD) : 0; // allign to 8 bytes
+            functionBufferSize += FunctionList_AtRO(&moduleData->FunctionDefinitions, j)->Size + sizeof(FunctionHeader); // header + body
         }
         for (u32 j = 0; j < moduleData->GlobalSizes.Count; j++)
         {
@@ -367,7 +375,7 @@ static i32  iAllocateContextBuffers(ProgramContext *context, const LinkData *lin
         (context->GlobalsBufferSize   != 0 && context->GlobalsBuffer      == NULL)
     )
     {
-        LOG_ERROR("Linked : Failed to allocate application data!");
+        DEVEL_ASSERT(false, "Linked : Failed to allocate application data!");
         return 1;
     }
     return 0;
@@ -415,14 +423,18 @@ static void iFillBuffers(ProgramContext *context, Map_String_Ptr *functionMap, M
         {
             const String *functionSignature  = List_String_AtRO(&moduleData->InternalFunctions, j);
             const FunctionData *functionData = FunctionList_AtRO(&moduleData->FunctionDefinitions, j);
-            Function *functionLoc = (Function*) functionPtr;
-            functionLoc->Header.MT = NULL;
-            memcpy((Byte*)functionLoc + 8, functionData->Func, functionData->Size);
+            Function *function = (Function*) functionPtr;
+            function->Header.MT = NULL;
+            function->Header.AWC = functionData->AWC;
+            function->Header.LWC = functionData->LWC;
+            function->Header.SWC = functionData->SWC;
+            function->Header.RWC = functionData->RWC;
+            memcpy(function->Body, functionData->Body, functionData->Size);
 
-            Map_String_Ptr_PutCopy(functionMap, functionSignature, (void**)&functionLoc);
-            functionPtr += functionData->Size + 8;
-            if((sz)functionPtr % 8) // allign
-                functionPtr += 8 - ((sz)functionPtr % 8);
+            Map_String_Ptr_PutCopy(functionMap, functionSignature, (void**)&function);
+            functionPtr += functionData->Size + sizeof(FunctionHeader);
+            if((sz)functionPtr % SIZEOF_DWORD) // allign
+                functionPtr += SIZEOF_DWORD - ((sz)functionPtr % SIZEOF_DWORD);
         }
     }
 }

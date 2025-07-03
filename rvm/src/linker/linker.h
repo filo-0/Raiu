@@ -17,10 +17,14 @@
 
 typedef struct _FunctionData
 {
-    u8 *Func;
+    u16 AWC;
+    u16 LWC;
+    u16 SWC;
+    u16 RWC;
+    u8 *Body;
     sz  Size;
 } FunctionData;
-static inline void FunctionData_Destroy(FunctionData *data) { free(data->Func); }
+static inline void FunctionData_Destroy(FunctionData *data) { free(data->Body); }
 
 #define LIST_T FunctionData
 #define LIST_T_DTOR FunctionData_Destroy
