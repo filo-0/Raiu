@@ -101,10 +101,9 @@ static inline void ModuleData_Destroy(ModuleData *data)
  * @attention The only case where the validity of a function is trusted 
  * is when the function uses the IND_CALL opcode (call through a function pointer)
  * 
- * @param functionSignature Currently is not possible to access the function signature throught the function header, this parameter will be removed.
  * @param header The function header 
- * @param instruction The instruction to start from, by default should be the first instruction
+ * @param instruction The instruction to start from, by default should be NULL
  * @param sp The current stack pointer, by default should be 0
  * @return 0 if the function is valid, 1 otherwise
  */
-i32 Validate(const String *functionSignature, const FunctionHeader *header, const u8 *instruction, i32 sp);
+i32 Validate(const Function *function, const u8 *instruction, i32 sp);

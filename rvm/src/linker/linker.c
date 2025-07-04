@@ -324,6 +324,7 @@ static i32  iAllocateContextBuffers(ProgramContext *context, const LinkData *lin
     sz stringBufferSize   = 0;
     sz functionBufferSize = 0;
     sz globalsBufferSize  = 0;
+    sz debugStringBufferSize = 0;
     for (u32 i = 0; i < linkData->Count; i++)
     {
         const ModuleData *moduleData = LinkData_AtRO(linkData, i);
@@ -344,8 +345,12 @@ static i32  iAllocateContextBuffers(ProgramContext *context, const LinkData *lin
             
             globalsBufferSize += globalsBufferSize % alignement ? alignement - (globalsBufferSize % alignement): 0; // align to alignement
             globalsBufferSize += globalSize;
-        }   
+        }
+        for(u32 j = 0; j < moduleData->InternalFunctions.Count; j++)
+            debugStringBufferSize += List_String_AtRO(&moduleData->InternalFunctions, j)->Length + 1;   
     }
+    
+    // TODO: allocate debug string buffer
     
     context->StackBottom = calloc(DEFAULT_STACK_SIZE, sizeof(Word));
     context->StackTop    = context->StackBottom + DEFAULT_STACK_SIZE / sizeof(Word);
@@ -356,7 +361,7 @@ static i32  iAllocateContextBuffers(ProgramContext *context, const LinkData *lin
     context->GlobalsBuffer      = globalsBufferSize  ? (Byte*)  calloc(globalsBufferSize, sizeof(Byte))  : NULL;
     context->FunctionsBuffer    = (Byte*)        calloc(functionBufferSize, sizeof(Byte));
     context->ModuleTablesBuffer = (ModuleTable*) calloc(linkData->Count   , sizeof(ModuleTable));
-
+    context->DebugStringsBuffer  = (Byte*)        calloc(debugStringBufferSize, sizeof(Byte));
 
     context->WordsBufferSize        = wordBufferSize;
     context->DWordsBufferSize       = dwordBufferSize;
@@ -364,15 +369,17 @@ static i32  iAllocateContextBuffers(ProgramContext *context, const LinkData *lin
     context->FunctionsBufferSize    = functionBufferSize;
     context->GlobalsBufferSize      = globalsBufferSize;
     context->ModuleTablesBufferSize = linkData->Count; 
+    context->DebugStringsBufferSize  = debugStringBufferSize;
 
     if(
+        (                                     context->DebugStringsBuffer == NULL) ||
         (                                     context->StackBottom        == NULL) ||
         (                                     context->ModuleTablesBuffer == NULL) ||
         (                                     context->FunctionsBuffer    == NULL) ||
         (context->WordsBufferSize     != 0 && context->WordsBuffer        == NULL) ||
         (context->DWordsBufferSize    != 0 && context->DWordsBuffer       == NULL) ||
         (context->StringsBufferSize   != 0 && context->StringsBuffer      == NULL) ||
-        (context->GlobalsBufferSize   != 0 && context->GlobalsBuffer      == NULL)
+        (context->GlobalsBufferSize   != 0 && context->GlobalsBuffer      == NULL) 
     )
     {
         DEVEL_ASSERT(false, "Linked : Failed to allocate application data!");
@@ -387,6 +394,7 @@ static void iFillBuffers(ProgramContext *context, Map_String_Ptr *functionMap, M
     Byte  *stringPtr   = context->StringsBuffer;
     Byte  *globalPtr   = context->GlobalsBuffer;
     Byte  *functionPtr = context->FunctionsBuffer;
+    Byte  *debugStringPtr = context->DebugStringsBuffer;
 
     for (u32 i = 0; i < linkData->Count; i++)
     {
@@ -423,13 +431,20 @@ static void iFillBuffers(ProgramContext *context, Map_String_Ptr *functionMap, M
         {
             const String *functionSignature  = List_String_AtRO(&moduleData->InternalFunctions, j);
             const FunctionData *functionData = FunctionList_AtRO(&moduleData->FunctionDefinitions, j);
+
             Function *function = (Function*) functionPtr;
+            function->Header.Signature = &debugStringPtr->Char;
             function->Header.MT = NULL;
             function->Header.AWC = functionData->AWC;
             function->Header.LWC = functionData->LWC;
             function->Header.SWC = functionData->SWC;
             function->Header.RWC = functionData->RWC;
             memcpy(function->Body, functionData->Body, functionData->Size);
+
+            // copy function signature
+            memcpy(debugStringPtr, String_CStr(functionSignature), functionSignature->Length);
+            debugStringPtr[functionSignature->Length].Int = 0;
+            debugStringPtr += functionSignature->Length + 1;
 
             Map_String_Ptr_PutCopy(functionMap, functionSignature, (void**)&function);
             functionPtr += functionData->Size + sizeof(FunctionHeader);
@@ -515,7 +530,7 @@ static i32  iSetEntryPoint(ProgramContext *context, const Map_String_Ptr *functi
         return LINKING_ERROR_NO_MAIN;
     }
     
-    context->EntryPoint = &(*mainLocation)->Header;
+    context->EntryPoint = *mainLocation;
 
     String_Destroy(&mainSignature);
     return 0;
@@ -566,7 +581,7 @@ i32 Link(ProgramContext *context, const String *rootpath)
     {
         const Map_String_Ptr_Pair *p = Map_String_Ptr_Iterator_AccessRO(&i);
         Function *f = (Function*)p->Val;
-        int validationError = Validate(&p->Key ,&f->Header, f->Body, 0);    
+        int validationError = Validate(f, NULL, 0);    
         if(validationError)
         {
             valid = false; 
@@ -602,4 +617,5 @@ void Unlink(ProgramContext *context)
     free(context->FunctionsBuffer);
     free(context->GlobalsBuffer);
     free(context->StackBottom);
+    free(context->DebugStringsBuffer);
 }

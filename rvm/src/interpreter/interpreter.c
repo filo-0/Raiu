@@ -5,18 +5,15 @@
 #include <time.h>
 #include <math.h>
 
-#include "raiu/assert.h"
-#include "raiu/types.h"
+#include "raiu/raiu.h"
 #include "metadata.h"
-#include "raiu/opcodes.h"
 #include "rvm.h"
 
 
 #define PC_OFFSET 0
 #define FP_OFFSET 2
-#define MT_OFFSET 4
-#define AWC_AND_RWC_OFFSET 6
-#define LOCALS_OFFSET 7
+#define FH_OFFSET 4
+#define LOCALS_OFFSET 6
 
 static inline u8 iNextU8(Byte **pc)  
 { 
@@ -282,33 +279,33 @@ static inline i8 iNextI16(Byte **pc)
 // Continue prefetches the instruction and jumps to the start of the loop
 #define CONTINUE do \
 { \
-    opcode = pc->UInt; \
+    op = pc->UInt; \
     goto LOOP; \
 } while (0)
 
 i32 Execute(ProgramContext *context)
 {
-    Byte            *pc;
-    Word            *sp;
-    Word            *fp;
-    ModuleTable     *mt;
-    Word            *wordPool;
-    DWord           *dwordPool;
-    ch8            **stringPool;
-    void           **globalPool;
-    Function       **functionPool;
-    u8               opcode;
+    Byte            *pc;    // Program Counter
+    Word            *sp;    // Stack Pointer
+    Word            *fp;    // Frame Pointer
+    FunctionHeader  *fh;    // Function Header
+    Word            *wpool; // Word Pool 
+    DWord           *dpool; // DWord Pool
+    ch8            **spool; // String Pool
+    void           **gpool; // Global Pool
+    Function       **fpool; // Function Pool
+    u8               op;    // Opcode
     
-    pc = (Byte*)(context->EntryPoint + 1);
-    sp = context->StackBottom + context->EntryPoint->LWC;
-    fp = context->StackBottom;
-    mt = context->EntryPoint->MT;
-    wordPool     = context->EntryPoint->MT->WordPool;
-    dwordPool    = context->EntryPoint->MT->DWordPool;
-    stringPool   = context->EntryPoint->MT->StringPool;
-    globalPool   = context->EntryPoint->MT->GlobalPool;
-    functionPool = context->EntryPoint->MT->FunctionPool;
-    opcode       = pc->UInt;
+    pc    = (Byte*)context->EntryPoint->Body;
+    sp    = context->StackBottom + context->EntryPoint->Header.LWC;
+    fp    = context->StackBottom;
+    fh    = &context->EntryPoint->Header;
+    wpool = context->EntryPoint->Header.MT->WordPool;
+    dpool = context->EntryPoint->Header.MT->DWordPool;
+    spool = context->EntryPoint->Header.MT->StringPool;
+    gpool = context->EntryPoint->Header.MT->GlobalPool;
+    fpool = context->EntryPoint->Header.MT->FunctionPool;
+    op    = pc->UInt;
     
 #pragma region InstructionTable
     __attribute__((aligned(128)))
@@ -597,9 +594,9 @@ i32 Execute(ProgramContext *context)
     const void * const *instructionTable = InstructionPointers;
 LOOP:
     pc += 1;
-    goto *instructionTable[opcode];
+    goto *instructionTable[op];
 HANDLE_NOT_IMPLEMENTED:
-    UNLIKELY(false, "Version not supported!\n");
+    UNLIKELY(false, "Instruction not supported in function %s!\n", fh->Signature);
     exit(EXIT_FAILURE);
 HANDLE_BREAKPOINT:
     DEVEL_ASSERT(false, "Breakpoint reached!\n");
@@ -608,14 +605,14 @@ HANDLE_BREAKPOINT:
 HANDLE_PUSH_BYTE:
     {
         sz l = iNextU8(&pc);
-        sz b = opcode - OP_PUSH_BYTE_0;
+        sz b = op - OP_PUSH_BYTE_0;
         LOCAL_PUSH_BYTE(sp, fp, l, b);
     }
     CONTINUE;
 HANDLE_PUSH_HWORD:
     {
         sz l = iNextU8(&pc);
-        sz h = opcode - OP_PUSH_HWORD_0;
+        sz h = op - OP_PUSH_HWORD_0;
         LOCAL_PUSH_HWORD(sp, fp, l, h);
     }
     CONTINUE;
@@ -627,7 +624,7 @@ HANDLE_PUSH_WORD:
     CONTINUE;
 HANDLE_PUSH_WORD_L:
     {
-        sz l = opcode - OP_PUSH_WORD_0;
+        sz l = op - OP_PUSH_WORD_0;
         LOCAL_PUSH_WORD(sp, fp, l);
     }
     CONTINUE;
@@ -639,7 +636,7 @@ HANDLE_PUSH_DWORD:
     CONTINUE;
 HANDLE_PUSH_DWORD_L:
     {
-        sz l = opcode - OP_PUSH_DWORD_0;
+        sz l = op - OP_PUSH_DWORD_0;
         LOCAL_PUSH_DWORD(sp, fp, l);
     }
     CONTINUE;
@@ -661,13 +658,13 @@ HANDLE_PUSH_REF:
 #pragma region Push Immediate
 HANDLE_PUSH_I32_V:
     {
-        Word w = IntToWord(opcode - OP_PUSH_0_WORD);
+        Word w = IntToWord(op - OP_PUSH_0_WORD);
         VAL_PUSH_WORD(sp, w);
     }
     CONTINUE;
 HANDLE_PUSH_I64_V:
     {
-        DWord d = IntToDWord(opcode - OP_PUSH_0_DWORD);
+        DWord d = IntToDWord(op - OP_PUSH_0_DWORD);
         VAL_PUSH_DWORD(sp, d);
     }
     CONTINUE;
@@ -711,55 +708,55 @@ HANDLE_PUSH_I64:
 #pragma region Push Constant
 HANDLE_PUSH_CONST_WORD:
     {
-        Word w = *(wordPool + iNextU8(&pc));
+        Word w = *(wpool + iNextU8(&pc));
         VAL_PUSH_WORD(sp, w);
     }
     CONTINUE;
 HANDLE_PUSH_CONST_WORD_W:
     {
-        Word w = *(wordPool + iNextU16(&pc));
+        Word w = *(wpool + iNextU16(&pc));
         VAL_PUSH_WORD(sp, w);
     }    
     CONTINUE;
 HANDLE_PUSH_CONST_DWORD:
     {
-        DWord d = *(dwordPool + iNextU8(&pc));
+        DWord d = *(dpool + iNextU8(&pc));
         VAL_PUSH_DWORD(sp, d);
     }    
     CONTINUE;
 HANDLE_PUSH_CONST_DWORD_W:
     {
-        DWord d = *(dwordPool + iNextU16(&pc));
+        DWord d = *(dpool + iNextU16(&pc));
         VAL_PUSH_DWORD(sp, d);
     }    
     CONTINUE;
 HANDLE_PUSH_CONST_STR:
     {
-        DWord d = RefToDWord(*(stringPool + iNextU8(&pc)));
+        DWord d = RefToDWord(*(spool + iNextU8(&pc)));
         VAL_PUSH_DWORD(sp, d);
     }    
     CONTINUE;
 HANDLE_PUSH_CONST_STR_W:
     {
-        DWord d = RefToDWord(*(stringPool + iNextU16(&pc)));
+        DWord d = RefToDWord(*(spool + iNextU16(&pc)));
         VAL_PUSH_DWORD(sp, d);
     }    
     CONTINUE;
 HANDLE_PUSH_GLOB_REF:
     {
-        DWord d = RefToDWord(*(globalPool + iNextU8(&pc)));
+        DWord d = RefToDWord(*(gpool + iNextU8(&pc)));
         VAL_PUSH_DWORD(sp, d);
     }
     CONTINUE;
 HANDLE_PUSH_GLOB_REF_W:
     {
-        DWord d = RefToDWord(*(globalPool + iNextU16(&pc)));
+        DWord d = RefToDWord(*(gpool + iNextU16(&pc)));
         VAL_PUSH_DWORD(sp, d);
     }
     CONTINUE;
 HANDLE_PUSH_FUNC:
     {
-        DWord funcPtr = RefToDWord(*(functionPool + iNextU16(&pc)));
+        DWord funcPtr = RefToDWord(*(fpool + iNextU16(&pc)));
         VAL_PUSH_DWORD(sp, funcPtr);
     }
     CONTINUE;
@@ -768,14 +765,14 @@ HANDLE_PUSH_FUNC:
 HANDLE_POP_BYTE:
     {
         sz l = iNextU8(&pc);
-        sz b = opcode - OP_POP_BYTE_0;
+        sz b = op - OP_POP_BYTE_0;
         POP_BYTE(sp, fp, l, b);
     }
     CONTINUE;
 HANDLE_POP_HWORD:
     {
         sz l = iNextU8(&pc);
-        sz h = opcode - OP_POP_HWORD_0;
+        sz h = op - OP_POP_HWORD_0;
         POP_HWORD(sp, fp, l, h);
     }
     CONTINUE;
@@ -787,7 +784,7 @@ HANDLE_POP_WORD:
     CONTINUE;
 HANDLE_POP_WORD_L:
     {
-        sz l = opcode - OP_POP_WORD_0;
+        sz l = op - OP_POP_WORD_0;
         POP_WORD(sp, fp, l);
     }
     CONTINUE;
@@ -799,7 +796,7 @@ HANDLE_POP_DWORD:
     CONTINUE;
 HANDLE_POP_DWORD_L:
     {
-        sz l = opcode - OP_POP_DWORD_0;
+        sz l = op - OP_POP_DWORD_0;
         POP_DWORD(sp, fp, l);
     }
     CONTINUE;
@@ -1204,13 +1201,13 @@ HANDLE_SWAP_DWORD:
 #pragma region Standard Load & Store
 HANDLE_LOAD_BYTE:
     {
-        sz b = opcode - OP_LOAD_BYTE_0;
+        sz b = op - OP_LOAD_BYTE_0;
         LOAD_BYTE(sp, 0, b);
     }
     CONTINUE;
 HANDLE_LOAD_HWORD:
     {
-        sz h = opcode - OP_LOAD_HWORD_0;
+        sz h = op - OP_LOAD_HWORD_0;
         LOAD_HWORD(sp, 0, h);
     }
     CONTINUE;
@@ -1233,13 +1230,13 @@ HANDLE_LOAD_WORDS:
     }
 HANDLE_STORE_BYTE:
     {
-        sz b = opcode - OP_STORE_BYTE_0;
+        sz b = op - OP_STORE_BYTE_0;
         STORE_BYTE(sp, 0, b);
     }
     CONTINUE;
 HANDLE_STORE_HWORD:
     {
-        sz h = opcode - OP_STORE_HWORD_0;
+        sz h = op - OP_STORE_HWORD_0;
         STORE_HWORD(sp, 0, h);
     }
     CONTINUE;
@@ -1264,14 +1261,14 @@ HANDLE_STORE_WORDS:
 HANDLE_LOAD_OFST_BYTE:
     {
         sz o = iNextU8(&pc);
-        sz b = opcode - OP_LOAD_OFST_BYTE_0;
+        sz b = op - OP_LOAD_OFST_BYTE_0;
         LOAD_BYTE(sp, o, b);
     }
     CONTINUE;
 HANDLE_LOAD_OFST_HWORD:
     {
         sz o = iNextU8(&pc);
-        sz h = opcode - OP_LOAD_OFST_HWORD_0;
+        sz h = op - OP_LOAD_OFST_HWORD_0;
         LOAD_HWORD(sp, o, h);
     }
     CONTINUE;
@@ -1302,14 +1299,14 @@ HANDLE_LOAD_OFST_WORDS:
 HANDLE_STORE_OFST_BYTE:
     {
         sz o = iNextU8(&pc);
-        sz b = opcode - OP_STORE_OFST_BYTE_0;
+        sz b = op - OP_STORE_OFST_BYTE_0;
         STORE_BYTE(sp, o, b);
     }
     CONTINUE;
 HANDLE_STORE_OFST_HWORD:
     {
         sz o = iNextU8(&pc);
-        sz h = opcode - OP_STORE_OFST_HWORD_0;
+        sz h = op - OP_STORE_OFST_HWORD_0;
         STORE_HWORD(sp, o, h);
     }
     CONTINUE;
@@ -1442,7 +1439,7 @@ HANDLE_CALL:
     FunctionHeader *header;
     {
         u16 f = iNextU16(&pc);
-        header = &functionPool[f]->Header;
+        header = &fpool[f]->Header;
     }
     goto CALL_HEADER;
 HANDLE_INDCALL:
@@ -1454,11 +1451,9 @@ CALL_HEADER:
     [ stack0 ] ... [ stackM ]
 */
     {        
-        ModuleTable *newMT = header->MT;
-        u16 awc         = header->AWC;
-        u16 lwc         = header->LWC;
-        u16 swc         = header->SWC;
-        u16 rwc         = header->RWC;
+        u16 awc = header->AWC;
+        u16 lwc = header->LWC;
+        u16 swc = header->SWC;
 
         for (u16 i = 0; i < awc; i++)
             sp[LOCALS_OFFSET  + i] = sp[i - awc];
@@ -1467,21 +1462,23 @@ CALL_HEADER:
         Word *newFP = sp;
         ((DWord*)(newFP + PC_OFFSET))->Ptr          = pc;
         ((DWord*)(newFP + FP_OFFSET))->Ptr          = fp;
-        ((DWord*)(newFP + MT_OFFSET))->Ptr          = mt;
-        (newFP + AWC_AND_RWC_OFFSET)->HWord[0].UInt = awc;
-        (newFP + AWC_AND_RWC_OFFSET)->HWord[1].UInt = rwc;
+        ((DWord*)(newFP + FH_OFFSET))->Ptr          = fh;
 
-        fp = newFP;
-        sp = newFP + LOCALS_OFFSET + lwc;
-        pc = (Byte*)(header + 1);
-        mt = newMT;
-        wordPool     = newMT->WordPool;
-        dwordPool    = newMT->DWordPool;
-        functionPool = newMT->FunctionPool;
-        stringPool   = newMT->StringPool;
-        globalPool   = newMT->GlobalPool;
+        fp    = newFP;
+        sp    = newFP + LOCALS_OFFSET + lwc;
+        pc    = (Byte*)(header + 1);
+        fh    = header;
+        wpool = fh->MT->WordPool;
+        dpool = fh->MT->DWordPool;
+        fpool = fh->MT->FunctionPool;
+        spool = fh->MT->StringPool;
+        gpool = fh->MT->GlobalPool;
 
-        UNLIKELY(sp + swc >= context->StackTop, "Stack overflow!\n");
+        if(sp + swc >= context->StackTop)
+        {
+            printf("Stack overflow in function %s\n", fh->Signature);
+            return -1;
+        }
     }
     CONTINUE;
 HANDLE_SYSCALL:
@@ -1639,24 +1636,21 @@ HANDLE_SYSCALL:
 HANDLE_RET:
     Byte *prevPC =        ((DWord*)(fp + PC_OFFSET))->BytePtr; 
     Word *prevFP =        ((DWord*)(fp + FP_OFFSET))->WordPtr;
-    ModuleTable *prevMT = ((DWord*)(fp + MT_OFFSET))->Ptr;
-    u16   awc    = (fp + AWC_AND_RWC_OFFSET)->HWord[0].UInt;
-    u16   rwc    = (fp + AWC_AND_RWC_OFFSET)->HWord[1].UInt;
+    FunctionHeader *prevFH = ((DWord*)(fp + FH_OFFSET))->Ptr;
 
-
-    Word *prevSP = fp - awc;
-    for (u16 i = 0; i < rwc; i++)
-        prevSP[i] = sp[i - rwc];
+    Word *prevSP = fp - prevFH->AWC;
+    for (u16 i = 0; i < fh->RWC; i++)
+        prevSP[i] = sp[i - fh->RWC];
     
-    sp = prevSP + rwc;
-    fp = prevFP;
-    pc = prevPC;
-    mt = prevMT;
-    wordPool     = mt->WordPool;
-    dwordPool    = mt->DWordPool;
-    stringPool   = mt->StringPool;
-    globalPool   = mt->GlobalPool;
-    functionPool = mt->FunctionPool;
+    sp    = prevSP + fh->RWC;
+    fp    = prevFP;
+    pc    = prevPC;
+    fh    = prevFH;
+    wpool = fh->MT->WordPool;
+    dpool = fh->MT->DWordPool;
+    spool = fh->MT->StringPool;
+    gpool = fh->MT->GlobalPool;
+    fpool = fh->MT->FunctionPool;
 
     CONTINUE;
 #pragma endregion

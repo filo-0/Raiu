@@ -21,16 +21,14 @@ struct _Function;
 typedef struct _ModuleTable
 {
     // direct buffers
-    Word      *WordPool;
-    DWord     *DWordPool;
+    Word  *WordPool;
+    DWord *DWordPool;
 
     // indirect buffers (Need to be freed)
     struct _Function **FunctionPool;
-    ch8              **StringPool;
+    char             **StringPool;
     void             **GlobalPool;
-
-    // Byte *StringBuffer;
-    
+     
     u16 WordPoolSize;
     u16 DWordPoolSize;
     u16 FunctionPoolSize;
@@ -40,6 +38,7 @@ typedef struct _ModuleTable
 
 /**
  * @brief The header of a function.
+ * @param Signature A reference to the function signature in the global debug string buffer
  * @param MT A reference to the module metadata table
  * @param AWC The Argument Word Count of the function
  * @param LWC The Local Word Count of the function
@@ -48,9 +47,9 @@ typedef struct _ModuleTable
  */
 typedef struct _FunctionHeader
 {
-    // char *Name
-    // u64 ValidationCertificate
     ModuleTable *MT;
+    char *Signature;
+    // u64 ValidationCertificate
     u16 AWC;
     u16 LWC;
     u16 SWC;
@@ -88,7 +87,7 @@ typedef struct _Function
  */
 typedef struct _ProgramContext
 {
-    FunctionHeader *EntryPoint;
+    Function *EntryPoint;
     Word *StackBottom; // need to be freed
     Word *StackTop;
 
@@ -106,6 +105,9 @@ typedef struct _ProgramContext
     sz FunctionsBufferSize;
     sz GlobalsBufferSize;
     sz ModuleTablesBufferSize;
+
+    Byte *DebugStringsBuffer;
+    sz    DebugStringsBufferSize;
 } ProgramContext;
 
 static inline void ProgramContext_Init(ProgramContext *context)

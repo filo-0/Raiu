@@ -3,7 +3,7 @@
 #include "raiu/log.h"
 
 
-i32 Validate(const String *functionSignature, const FunctionHeader *header, const u8 *instruction, i32 sp)
+i32 Validate(const Function *function, const u8 *instruction, i32 sp)
 {
     static const i32 sInstructionsStackOffsets[] = 
     {
@@ -200,9 +200,9 @@ i32 Validate(const String *functionSignature, const FunctionHeader *header, cons
         0, 0, 0, 0, 0, 0 
     };
     
-    if(header->AWC > header->LWC)
+    if(function->Header.AWC > function->Header.LWC)
     {
-        DEVEL_ASSERT(false, "AWC greater than LWC in function %s\n", String_CStr(functionSignature));
+        DEVEL_ASSERT(false, "AWC greater than LWC in function %s\n", function->Header.Signature);
         return 1;   
     }
 
@@ -210,6 +210,8 @@ i32 Validate(const String *functionSignature, const FunctionHeader *header, cons
     const i32 *instrStackOffsets = sInstructionsStackOffsets;
     const i32 *instrParamOffsets = sInstructionsFixedParameterSizes;
     const i32 *sysfnStackOffsets = sSysfnStackOffsets;
+    if(!instruction)
+        instruction = function->Body;
 
     bool exited = false;
     while (!exited)
@@ -217,14 +219,14 @@ i32 Validate(const String *functionSignature, const FunctionHeader *header, cons
         opcode = *instruction;
         if(opcode == 0 || opcode > OP_MAX_OPCODE)
         {
-            DEVEL_ASSERT(false, "Invalid instruction in function %s! [opcode=%u]\n", String_CStr(functionSignature), opcode);
+            DEVEL_ASSERT(false, "Invalid instruction in function %s! [opcode=%u]\n", function->Header.Signature, opcode);
             return 1;
         }
 
         if(opcode == OP_JMP_IF)
         {
             u8 offset = instruction[1];
-            i32 branchIfTrueError = Validate(functionSignature, header, instruction + offset + 1, sp - 1);
+            i32 branchIfTrueError = Validate(function, instruction + offset + 1, sp - 1);
             if(branchIfTrueError)
                 return 1;
         }
@@ -261,9 +263,9 @@ i32 Validate(const String *functionSignature, const FunctionHeader *header, cons
         case OP_DEC_F64:
             {
                 u8 l = instruction[1];
-                if(l >= header->LWC)
+                if(l >= function->Header.LWC)
                 {
-                    DEVEL_ASSERT(false, "Invalid local scope access in function %s [LWC=%u,l=%u]\n", String_CStr(functionSignature), header->LWC, l);
+                    DEVEL_ASSERT(false, "Invalid local scope access in function %s [LWC=%u,l=%u]\n", function->Header.Signature, function->Header.LWC, l);
                     return 1;
                 }
             }
@@ -272,9 +274,9 @@ i32 Validate(const String *functionSignature, const FunctionHeader *header, cons
         case OP_PUSH_CONST_WORD:
             {
                 u8 c = instruction[1];
-                if(c >= header->MT->WordPoolSize)
+                if(c >= function->Header.MT->WordPoolSize)
                 {
-                    DEVEL_ASSERT(false, "Invalid const word access in function %s [MAX=%u,c=%u]\n", String_CStr(functionSignature), header->MT->WordPoolSize, c);
+                    DEVEL_ASSERT(false, "Invalid const word access in function %s [MAX=%u,c=%u]\n", function->Header.Signature, function->Header.MT->WordPoolSize, c);
                     return 1;
                 }
             }
@@ -282,9 +284,9 @@ i32 Validate(const String *functionSignature, const FunctionHeader *header, cons
         case OP_PUSH_CONST_WORD_W:
             {
                 u16 c = *(u16*)(instruction + 1);
-                if(c >= header->MT->WordPoolSize)
+                if(c >= function->Header.MT->WordPoolSize)
                 {
-                    DEVEL_ASSERT(false, "Invalid const word access in function %s [MAX=%u,c=%u]\n", String_CStr(functionSignature), header->MT->WordPoolSize, c);
+                    DEVEL_ASSERT(false, "Invalid const word access in function %s [MAX=%u,c=%u]\n", function->Header.Signature, function->Header.MT->WordPoolSize, c);
                     return 1;
                 }
             }
@@ -292,9 +294,9 @@ i32 Validate(const String *functionSignature, const FunctionHeader *header, cons
         case OP_PUSH_CONST_DWORD:
             {
                 u8 c = instruction[1];
-                if(c >= header->MT->DWordPoolSize)
+                if(c >= function->Header.MT->DWordPoolSize)
                 {
-                    DEVEL_ASSERT(false, "Invalid const dword access in function %s [MAX=%u,c=%u]\n", String_CStr(functionSignature), header->MT->DWordPoolSize, c);
+                    DEVEL_ASSERT(false, "Invalid const dword access in function %s [MAX=%u,c=%u]\n", function->Header.Signature, function->Header.MT->DWordPoolSize, c);
                     return 1;
                 }
             }
@@ -302,9 +304,9 @@ i32 Validate(const String *functionSignature, const FunctionHeader *header, cons
         case OP_PUSH_CONST_DWORD_W:
             {
                 u16 c = *(u16*)(instruction + 1);
-                if(c >= header->MT->DWordPoolSize)
+                if(c >= function->Header.MT->DWordPoolSize)
                 {
-                    DEVEL_ASSERT(false, "Invalid const dword access in function %s [MAX=%u,c=%u]\n", String_CStr(functionSignature), header->MT->DWordPoolSize, c);
+                    DEVEL_ASSERT(false, "Invalid const dword access in function %s [MAX=%u,c=%u]\n", function->Header.Signature, function->Header.MT->DWordPoolSize, c);
                     return 1;
                 }
             }
@@ -312,9 +314,9 @@ i32 Validate(const String *functionSignature, const FunctionHeader *header, cons
         case OP_PUSH_CONST_STR:
             {
                 u8 c = instruction[1];
-                if(c >= header->MT->StringPoolSize)
+                if(c >= function->Header.MT->StringPoolSize)
                 {
-                    DEVEL_ASSERT(false, "Invalid const string access in function %s [MAX=%u,c=%u]\n", String_CStr(functionSignature), header->MT->StringPoolSize, c);
+                    DEVEL_ASSERT(false, "Invalid const string access in function %s [MAX=%u,c=%u]\n", function->Header.Signature, function->Header.MT->StringPoolSize, c);
                     return 1;
                 }
             }
@@ -322,9 +324,9 @@ i32 Validate(const String *functionSignature, const FunctionHeader *header, cons
         case OP_PUSH_CONST_STR_W:
             {
                 u16 c = *(u16*)(instruction + 1);
-                if(c >= header->MT->StringPoolSize)
+                if(c >= function->Header.MT->StringPoolSize)
                 {
-                    DEVEL_ASSERT(false, "Invalid const string access in function %s [MAX=%u,c=%u]\n", String_CStr(functionSignature), header->MT->StringPoolSize, c);
+                    DEVEL_ASSERT(false, "Invalid const string access in function %s [MAX=%u,c=%u]\n", function->Header.Signature, function->Header.MT->StringPoolSize, c);
                     return 1;
                 }
             }
@@ -332,9 +334,9 @@ i32 Validate(const String *functionSignature, const FunctionHeader *header, cons
         case OP_PUSH_GLOB_REF:
             {
                 u8 c = instruction[1];
-                if(c >= header->MT->GlobalPoolSize)
+                if(c >= function->Header.MT->GlobalPoolSize)
                 {
-                    DEVEL_ASSERT(false, "Invalid global data access in function %s [MAX=%u,c=%u]\n", String_CStr(functionSignature), header->MT->StringPoolSize, c);
+                    DEVEL_ASSERT(false, "Invalid global data access in function %s [MAX=%u,c=%u]\n", function->Header.Signature, function->Header.MT->StringPoolSize, c);
                     return 1;
                 }
             }
@@ -342,9 +344,9 @@ i32 Validate(const String *functionSignature, const FunctionHeader *header, cons
         case OP_PUSH_GLOB_REF_W:
             {
                 u16 c = *(u16*)(instruction + 1);
-                if(c >= header->MT->GlobalPoolSize)
+                if(c >= function->Header.MT->GlobalPoolSize)
                 {
-                    DEVEL_ASSERT(false, "Invalid global data access in function %s [MAX=%u,c=%u]\n", String_CStr(functionSignature), header->MT->StringPoolSize, c);
+                    DEVEL_ASSERT(false, "Invalid global data access in function %s [MAX=%u,c=%u]\n", function->Header.Signature, function->Header.MT->StringPoolSize, c);
                     return 1;
                 }
             }
@@ -352,9 +354,9 @@ i32 Validate(const String *functionSignature, const FunctionHeader *header, cons
         case OP_PUSH_FUNC:
             {
                 u16 c = *(u16*)(instruction + 1);
-                if(c >= header->MT->FunctionPoolSize)
+                if(c >= function->Header.MT->FunctionPoolSize)
                 {
-                    DEVEL_ASSERT(false, "Invalid function pointer access in function %s [MAX=%u,c=%u]\n", String_CStr(functionSignature), header->MT->StringPoolSize, c);
+                    DEVEL_ASSERT(false, "Invalid function pointer access in function %s [MAX=%u,c=%u]\n", function->Header.Signature, function->Header.MT->StringPoolSize, c);
                     return 1;
                 }
             }
@@ -362,9 +364,9 @@ i32 Validate(const String *functionSignature, const FunctionHeader *header, cons
         case OP_POP_WORDS:
             {
                 u8 l = instruction[1];
-                if(l >= header->LWC)
+                if(l >= function->Header.LWC)
                 {
-                    DEVEL_ASSERT(false, "Invalid local scope access in function %s [LWC=%u,l=%u]\n", String_CStr(functionSignature), header->LWC, l);
+                    DEVEL_ASSERT(false, "Invalid local scope access in function %s [LWC=%u,l=%u]\n", function->Header.Signature, function->Header.LWC, l);
                     return 1;
                 }
 
@@ -375,9 +377,9 @@ i32 Validate(const String *functionSignature, const FunctionHeader *header, cons
         case OP_PUSH_WORDS:
             {
                 u8 l = instruction[1];
-                if(l >= header->LWC)
+                if(l >= function->Header.LWC)
                 {
-                    DEVEL_ASSERT(false, "Invalid local scope access in function %s [LWC=%u,l=%u]",String_CStr(functionSignature), header->LWC, l);
+                    DEVEL_ASSERT(false, "Invalid local scope access in function %s [LWC=%u,l=%u]",function->Header.Signature, function->Header.LWC, l);
                     return 1;
                 }
 
@@ -424,13 +426,13 @@ i32 Validate(const String *functionSignature, const FunctionHeader *header, cons
         case OP_CALL:
             {
                 u16 f = *(u16*)(instruction + 1);
-                if(f >= header->MT->FunctionPoolSize)
+                if(f >= function->Header.MT->FunctionPoolSize)
                 {
-                    DEVEL_ASSERT(false, "Invalid function call in function %s [MAX=%u,f=%u]\n", String_CStr(functionSignature), header->MT->FunctionPoolSize, f);
+                    DEVEL_ASSERT(false, "Invalid function call in function %s [MAX=%u,f=%u]\n", function->Header.Signature, function->Header.MT->FunctionPoolSize, f);
                     return 1;
                 }
-                Function *function = header->MT->FunctionPool[f];            
-                stackOffset = function->Header.RWC - function->Header.AWC;
+                Function *functionCalled = function->Header.MT->FunctionPool[f];            
+                stackOffset = functionCalled->Header.RWC - functionCalled->Header.AWC;
             }
             break;
         case OP_INDCALL:
@@ -443,7 +445,7 @@ i32 Validate(const String *functionSignature, const FunctionHeader *header, cons
                 u8 f = instruction[1];
                 if(f > OP_SYS_MAX_OPCODE)
                 {
-                    DEVEL_ASSERT(false, "Invalid system call in function %s [MAX=%d,f=%u]\n", String_CStr(functionSignature), OP_SYS_MAX_OPCODE, f);
+                    DEVEL_ASSERT(false, "Invalid system call in function %s [MAX=%d,f=%u]\n", function->Header.Signature, OP_SYS_MAX_OPCODE, f);
                     return 1;
                 }
 
@@ -453,7 +455,7 @@ i32 Validate(const String *functionSignature, const FunctionHeader *header, cons
             }
             break;
         case OP_RET:
-            stackOffset = header->RWC;
+            stackOffset = function->Header.RWC;
             exited = true;
             break;
         default:
@@ -464,9 +466,9 @@ i32 Validate(const String *functionSignature, const FunctionHeader *header, cons
         sp += stackOffset;
         instruction += paramOffset + 1;
 
-        if(sp < 0 || sp > header->SWC)
+        if(sp < 0 || sp > function->Header.SWC)
         {
-            DEVEL_ASSERT(false, "Stack Poiter out of scope in function %s\n", String_CStr(functionSignature));
+            DEVEL_ASSERT(false, "Stack Poiter out of scope in function %s\n", function->Header.Signature);
             return 1;
         }
     } 
